@@ -2,9 +2,16 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>http://yoursite.com/2016/12/31/SingleDesginPattern/</loc>
+    
+    <lastmod>2016-12-31T09:32:02.341Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>http://yoursite.com/2016/12/23/summary-use-broadcast/</loc>
     
-    <lastmod>2016-12-23T14:12:54.556Z</lastmod>
+    <lastmod>2016-12-31T09:20:48.869Z</lastmod>
     
   </url>
   
