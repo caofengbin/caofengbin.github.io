@@ -1,129 +1,174 @@
-	<!DOCTYPE HTML>
-<html>
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- Head tag -->
 <head>
-  <meta charset="utf-8">
-  
-  <title>Java注解机制基础 | Hexo</title>
-  <meta name="author" content="John Doe">
-  
-  <meta name="description" content="&amp;emsp;&amp;emsp;最近整体研究了一下ButterKnife这个框架，顺带着系统回顾梳理了一遍Java注解相关的知识点。本文大致整理了一下注解的几个核心部分，内容参考了很多现有的资料，在参考文献中做出了说明。希望通过本文能对注解的基本原理做一个简要的梳理，为后续两篇文章深入的分析ButterKn">
-  
-  
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="caofengbin在 Github 上的个人博客">
+    <meta name="keyword" content="null">
+    <meta name="theme-color" content="#600090">
+    <meta name="msapplication-navbutton-color" content="#600090">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="#600090">
+    <link rel="shortcut icon" href="https://cdn4.iconfinder.com/data/icons/ionicons/512/icon-person-128.png">
+    <link rel="alternate" type="application/atom+xml" title="Caofenbin" href="/atom.xml">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css">
+    <link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.css">
+    <title>
+        
+        Java注解机制基础｜caofengbin&#39;s blog
+        
+    </title>
 
-  <meta property="og:title" content="Java注解机制基础"/>
-  <meta property="og:site_name" content="Hexo"/>
+    <link rel="canonical" href="http://haojen.github.io/2017/01/19/annotation-base-use/">
 
-  
-  
-		<!-- favicon -->
-		<link rel="apple-touch-icon" sizes="57x57" href="/apple-touch-icon-57x57.png">
-		<link rel="apple-touch-icon" sizes="60x60" href="/apple-touch-icon-60x60.png">
-		<link rel="apple-touch-icon" sizes="72x72" href="/apple-touch-icon-72x72.png">
-		<link rel="apple-touch-icon" sizes="76x76" href="/apple-touch-icon-76x76.png">
-		<link rel="apple-touch-icon" sizes="114x114" href="/apple-touch-icon-114x114.png">
-		<link rel="apple-touch-icon" sizes="120x120" href="/apple-touch-icon-120x120.png">
-		<link rel="apple-touch-icon" sizes="144x144" href="/apple-touch-icon-144x144.png">
-		<link rel="apple-touch-icon" sizes="152x152" href="/apple-touch-icon-152x152.png">
-		<link rel="icon" type="image/png" href="/favicon-32x32.png" sizes="32x32">
-		<link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96">
-		<link rel="icon" type="image/png" href="/favicon-16x16.png" sizes="16x16">
-		<link rel="manifest" href="/manifest.json">
-		<meta name="msapplication-TileColor" content="#009688">
-		<meta name="msapplication-TileImage" content="/mstile-144x144.png">
-		<meta name="theme-color" content="#009688">
-		<!-- favicon end -->
-    <!-- <link href="/favicon.ico" rel="icon"> -->
-  
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
 
-  <!-- toc -->
-  <link rel="stylesheet" href="/libs/tocify/jquery.tocify.css" media="screen" type="text/css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/blog-style.css">
 
-  <!-- <link rel="stylesheet" href="/libs/bs/css/bootstrap.min.css" media="screen" type="text/css"> -->
-  <link rel="stylesheet" href="//apps.bdimg.com/libs/bootstrap/3.3.4/css/bootstrap.min.css" media="screen" type="text/css">
-
-  <!-- material design -->
-	<!-- <link rel="stylesheet" href="/libs/bs-material/css/ripples.min.css" media="screen" type="text/css"> -->
-  <link rel="stylesheet" href="//apps.bdimg.com/libs/bootstrap-material/0.3.0/css/ripples.min.css" media="screen" type="text/css">
-  <!-- <link rel="stylesheet" href="/libs/bs-material/css/material.min.css" media="screen" type="text/css"> -->
-	<link rel="stylesheet" href="//apps.bdimg.com/libs/bootstrap-material/0.3.0/css/material.min.css" media="screen" type="text/css">
-
-  <link rel="stylesheet" href="/css/highlight.light.css" media="screen" type="text/css">
-
-  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
-
-  
-
-  
-
-  <script src="//apps.bdimg.com/libs/jquery/2.0.3/jquery.min.js"></script>
-	<script>window.jQuery || document.write('<script src="/libs/jquery-2.0.3.min.js" type="text/javascript"><\/script>')</script>
-
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
 </head>
 
- 	<body>
-	  <nav class="navbar navbar-default">
-    <div class="container">
-        <div class="navbar-header">
-            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-            <span class="sr-only">菜单</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
+<style>
+
+    header.intro-header {
+        background-image: url('//o7bkkhiex.bkt.clouddn.com/lion-blur-bg.jpg')
+    }
+</style>
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="" class="animated fadeIn">
+<!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top " id="nav-top" data-ispost = "true" data-istags="false
+" data-ishome = "false" >
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="/">Hexo</a>
+            <a class="navbar-brand animated pulse" href="/">
+                <span class="brand-logo">
+                    Caofenbin
+                </span>
+                's Blog
+            </a>
         </div>
-        <div id="navbar" class="collapse navbar-collapse">
-            <ul class="nav navbar-nav navbar-right">
-                
-                <li>
-                    <a href="/" title="">
-                    <i class="fa fa-home"></i>首页
-                    </a>
-                </li>
-                
-                <li>
-                    <a href="/archives" title="">
-                    <i class="fa fa-list"></i>存档
-                    </a>
-                </li>
-                
-                <li>
-                    <a href="/about" title="">
-                    <i class="fa fa-info-circle"></i>关于
-                    </a>
-                </li>
-                
-                <li>
-                    <a href="/atom.xml" title="这是一个订阅源">
-                    <i class="fa fa-rss"></i>RSS
-                    </a>
-                </li>
-                
-            </ul>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Known Issue, found by Hux:
+            <nav>'s height woule be hold on by its content.
+            so, when navbar scale out, the <nav> will cover tags.
+            also mask any touch event of tags, unfortunately.
+        -->
+        <!-- /.navbar-collapse -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+					
+                    
+					
+					
+                </ul>
+            </div>
         </div>
     </div>
+    <!-- /.container -->
 </nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+//    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
 
-	  <div class="container" >
-	    <div class="row">
-	
-	<div class="col-md-9 center-content">
-	
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        // CLOSE
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        // OPEN
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
 
-		<div class="content">
-			<!-- index -->
-		   
+<!-- Main Content -->
 
-			  		<h2>Java注解机制基础</h2>
-					
-					<div>
-						<span class="post-time">2017-01-19 20:18:39</span>
-					</div>	
-					
+<!--only post-->
 
-					<div class="article-content">
-						<p>&emsp;&emsp;最近整体研究了一下ButterKnife这个框架，顺带着系统回顾梳理了一遍Java注解相关的知识点。本文大致整理了一下注解的几个核心部分，内容参考了很多现有的资料，在参考文献中做出了说明。希望通过本文能对注解的基本原理做一个简要的梳理，为后续两篇文章深入的分析ButterKnife实现原理做好铺垫。</p>
+
+<img class="wechat-title-img"
+     src="http://occl9k36n.bkt.clouddn.com/my_homepage_img2.jpg">
+
+
+<style>
+    
+    header.intro-header {
+        background-image: url('http://occl9k36n.bkt.clouddn.com/my_homepage_img2.jpg')
+    }
+
+    
+</style>
+
+<header class="intro-header">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 text-center">
+                <div class="post-heading">
+                    <h1>Java注解机制基础</h1>
+                    
+                    <span class="meta">
+                         作者 Caofengbin
+                        <span>
+                          日期 2017-01-19
+                         </span>
+                    </span>
+                    <div class="tags text-center">
+                        
+                        <a class="tag" href="/tags/#Annotation"
+                           title="Annotation">Annotation</a>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="post-title-haojen">
+        <span>
+            Java注解机制基础
+        </span>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+            <!-- Post Container -->
+            <div class="col-lg-8 col-lg-offset-1 col-sm-9 post-container">
+                <p>&emsp;&emsp;最近整体研究了一下ButterKnife这个框架，顺带着系统回顾梳理了一遍Java注解相关的知识点。本文大致整理了一下注解的几个核心部分，内容参考了很多现有的资料，在参考文献中做出了说明。希望通过本文能对注解的基本原理做一个简要的梳理，为后续两篇文章深入的分析ButterKnife实现原理做好铺垫。</p>
 <hr>
 <h2 id="1-注解概述"><a href="#1-注解概述" class="headerlink" title="1.注解概述"></a>1.注解概述</h2><h3 id="1-定义"><a href="#1-定义" class="headerlink" title="(1)定义"></a>(1)定义</h3><p>&emsp;&emsp;注解(Annotation)是Java1.5中引入的一个重大修改之一，<strong>为我们在代码中添加信息提供了一种形式化的方法，使我们可以在稍后某个时刻非常方便的使用这些数据</strong>。<br>&emsp;&emsp;注解在一定程度上是把元数据与源代码结合在一起，而不是保存在外部文档中。<br>&emsp;&emsp;<strong>注解的含义可以理解为java中的元数据。元数据是描述数据的数据。</strong>如下所示：</p>
 <figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">&lt;string name="app_version"&gt;5.4&lt;/string&gt;</div></pre></td></tr></table></figure>
@@ -321,57 +366,219 @@
 <h3 id="3-注解的解析"><a href="#3-注解的解析" class="headerlink" title="(3)注解的解析"></a>(3)注解的解析</h3><p>&emsp;&emsp;当注解被添加到java源代码中后，并不会自动产生作用。某些注解甚至不会在字节代码中出现。<strong>创建和使用注解只是完成了第一步，重要的是如何对注解进行相应的处理。在一般情况下，创建和处理注解是Java标准库和第三方库应该做的事情，开发人员只需要使用注解就可以</strong>。<br>&emsp;&emsp;根据生存周期不同，可以分为两种解析方式：<strong>运行时解析和编译时解析</strong>。后续会对这两种解析技术进行详细的分析说明，并分别基于运行时解析和编译时解析简单的模拟实现ButterKnife的效果。</p>
 <h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><p><a href="http://fyales.com/2015/08/21/Annotation/" target="_blank" rel="external">1.Java注解</a><br><a href="https://zhuanlan.zhihu.com/p/21410338" target="_blank" rel="external">2.深入浅出Java注解</a><br><a href="https://developer.android.com/studio/write/annotations.html#call-super" target="_blank" rel="external">3.Improve Code Inspection with Annotations官方文档</a></p>
 
-					</div>
+                <hr>
+                
 
-			  <!-- about -->
-			  
-		</div>
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/2017/01/20/inside-learn-butter-knife/" data-toggle="tooltip" data-placement="top"
+                           title="ButterKnife的使用与原理(1)">&larr; Previous Post</a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/2016/12/31/SingleDesginPattern/" data-toggle="tooltip" data-placement="top"
+                           title="单例模式各版本的原理与实践">Next Post &rarr;</a>
+                    </li>
+                    
+                </ul>
 
-		<!-- pagination -->
-	  
+                
 
-		<div class="comment-section">
-  
-  
+                
+
+            </div>
+
+            <div class="hidden-xs col-sm-3 toc-col">
+                <div class="toc-wrap">
+                    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-注解概述"><span class="toc-text">1.注解概述</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-定义"><span class="toc-text">(1)定义</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-注解与注释的不同"><span class="toc-text">(2)注解与注释的不同</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-注解的作用"><span class="toc-text">(3)注解的作用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-注解是如何工作的"><span class="toc-text">(4)注解是如何工作的</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-注解和配置文件的区别"><span class="toc-text">(5)注解和配置文件的区别</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-注解类型"><span class="toc-text">(6)注解类型</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-Java标准库中内置的注解"><span class="toc-text">2.Java标准库中内置的注解</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-java-lang-Override"><span class="toc-text">(1)java.lang.Override</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-java-lang-Deprecated"><span class="toc-text">(2)java.lang.Deprecated</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-java-lang-SuppressWarnings"><span class="toc-text">(3)java.lang.SuppressWarnings</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-SafeVarargs-Java-SE-7"><span class="toc-text">(4)@SafeVarargs(Java SE 7)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-FunctionalInterface-Java-SE-8"><span class="toc-text">(5)@FunctionalInterface(Java SE 8)</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-Java标准库中的元注解-Meta-annotations"><span class="toc-text">3.Java标准库中的元注解(Meta-annotations)</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-Target："><span class="toc-text">(1)@Target：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-Retention："><span class="toc-text">(2)@Retention：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-Documented："><span class="toc-text">(3)@Documented：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-Inherited："><span class="toc-text">(4)@Inherited：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-Repetable-Java-8中新增加的"><span class="toc-text">(5)@Repetable(Java 8中新增加的):</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-Android-Support-Annotations"><span class="toc-text">4.Android Support Annotations</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-Nullness-Annotations："><span class="toc-text">(1)Nullness Annotations：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-Resource-Annotations："><span class="toc-text">(2)Resource Annotations：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-Thread-Annotations："><span class="toc-text">(3)Thread Annotations：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-Value-Constraint-Annotations-值约束注解-："><span class="toc-text">(4)Value Constraint Annotations(值约束注解)：</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#IntRange"><span class="toc-text">@IntRange</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#FloatRange"><span class="toc-text">@FloatRange</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Size"><span class="toc-text">@Size</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-Permission-Annotations-权限注解-："><span class="toc-text">(5)Permission Annotations(权限注解)：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-CallSuper-Annotations-复写方法注解-："><span class="toc-text">(6)CallSuper Annotations(复写方法注解)：</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-自定义注解"><span class="toc-text">5.自定义注解</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-基本格式："><span class="toc-text">(1)基本格式：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-相关说明"><span class="toc-text">(2)相关说明</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-注解的解析"><span class="toc-text">(3)注解的解析</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考文献"><span class="toc-text">参考文献</span></a></li></ol>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Sidebar Container -->
+
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <!-- no hr -->
+                    <h5 class="text-center">
+                        <a href="/tags/">FEATURED TAGS</a>
+                    </h5>
+                    <div class="tags">
+                        
+                        <a class="tag" href="/tags/#Annotation"
+                           title="Annotation">Annotation</a>
+                        
+                    </div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <div style="margin-top: 20px;">
+                    <h5 class="text-center">FRIENDS</h5>
+                    <ul class="list-inline text-center">
+                        
+                        <li><a href="http://stormzhang.com/posts/">stormzhang的博客链接</a></li>
+                        
+                        <li><a href="http://blog.csdn.net/sinyu890807/article/list/1">郭霖博客频道</a></li>
+                        
+                    </ul>
+                </div>
+                
+            </div>
+        </div>
+
+    </div>
+</article>
 
 
-</div>
-	</div>
-
-	
-
-</div>
 
 
-		<footer>
-			
 
-<p>
-  由 <a href="https://hexo.io">hexo</a> 强力驱动 | 搭载 <a href="https://github.com/wayou/hexo-theme-material">material</a> 主题
-</p>
-<p>
-  &copy; 2017 <a href="http://yoursite.com"> John Doe </a>
-</p>
-<a id="gotop" href="#" title="back to top"><i class="mdi-hardware-keyboard-arrow-up"></i></a>
 
-		</footer>
-	  </div>
+<!-- Footer -->
+<!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 text-center">
+                <br>
+                <ul class="list-inline text-center">
+                
+                
+                    <li>
+                        <a target="_blank" href="https://twitter.com/ehazon">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-twitter fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                
+                
+                    <li>
+                        <a target="_blank" href="https://www.zhihu.com/people/megahertz">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa  fa-stack-1x fa-inverse">知</i>
+                            </span>
+                        </a>
+                    </li>
+                
 
-		<!-- <script src="/libs/bs/js/bootstrap.min.js"></script> -->
-		<script src="//apps.bdimg.com/libs/bootstrap/3.3.4/js/bootstrap.min.js"></script>
-		<script>(typeof $().modal == 'function')|| document.write('<script src="/libs/bs/js/bootstrap.min.js" type="text/javascript"><\/script>')</script>
+                
+                    <li>
+                        <a target="_blank" href="http://weibo.com/haojen">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-weibo fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                
 
-		<!-- material design -->
-		<!-- <script src="/libs/bs-material/js/ripples.min.js"></script> -->
-		<script src="//apps.bdimg.com/libs/bootstrap-material/0.3.0/js/ripples.min.js"></script>
-		<!-- <script src="/libs/bs-material/js/material.min.js"></script> -->
-		<script src="//apps.bdimg.com/libs/bootstrap-material/0.3.0/js/material.min.js"></script>
-		<!-- toc -->
-		<!-- <script src="/libs/tocify/jquery-ui.min.js"></script> -->
-		<script src="//apps.bdimg.com/libs/jqueryui/1.10.4/jquery-ui.min.js"></script>
-		<script src="/libs/tocify/jquery.tocify.custom.js"></script>
+                
 
-		<script src="/js/main.js"></script>
+                
+                    <li>
+                        <a target="_blank"  href="https://github.com/haojen">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                
 
-	</body>
+                
+
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; Caofenbin 2017
+                    <br>
+                    <span id="busuanzi_container_site_pv" style="font-size: 12px;">PV: <span id="busuanzi_value_site_pv"></span> Times</span>
+                    <br>
+                    Theme by <a href="https://haojen.github.io/">Haojen Ma</a>
+                </p>
+
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js"></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js"></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/blog.js"></script>
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async("http://haojen.github.io/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("//cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+<!-- Google Analytics -->
+
+
+
+<!-- Baidu Tongji -->
+
+
+<!-- swiftype -->
+<script type="text/javascript">
+  (function(w,d,t,u,n,s,e){w['SwiftypeObject']=n;w[n]=w[n]||function(){
+  (w[n].q=w[n].q||[]).push(arguments);};s=d.createElement(t);
+  e=d.getElementsByTagName(t)[0];s.async=1;s.src=u;e.parentNode.insertBefore(s,e);
+  })(window,document,'script','//s.swiftypecdn.com/install/v2/st.js','_st');
+
+  _st('install','null','2.0.0');
+</script>
+
+<script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<!--wechat title img-->
+<img class="wechat-title-img" src="null">
+</body>
+
 </html>

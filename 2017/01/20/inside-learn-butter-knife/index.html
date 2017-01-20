@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- Head tag -->
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="caofengbin在 Github 上的个人博客">
+    <meta name="keyword" content="null">
+    <meta name="theme-color" content="#600090">
+    <meta name="msapplication-navbutton-color" content="#600090">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="#600090">
+    <link rel="shortcut icon" href="https://cdn4.iconfinder.com/data/icons/ionicons/512/icon-person-128.png">
+    <link rel="alternate" type="application/atom+xml" title="Caofenbin" href="/atom.xml">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css">
+    <link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.css">
+    <title>
+        
+        ButterKnife的使用与原理(1)｜caofengbin&#39;s blog
+        
+    </title>
+
+    <link rel="canonical" href="http://haojen.github.io/2017/01/20/inside-learn-butter-knife/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/blog-style.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+</head>
+
+<style>
+
+    header.intro-header {
+        background-image: url('//o7bkkhiex.bkt.clouddn.com/lion-blur-bg.jpg')
+    }
+</style>
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="" class="animated fadeIn">
+<!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top " id="nav-top" data-ispost = "true" data-istags="false
+" data-ishome = "false" >
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand animated pulse" href="/">
+                <span class="brand-logo">
+                    Caofenbin
+                </span>
+                's Blog
+            </a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Known Issue, found by Hux:
+            <nav>'s height woule be hold on by its content.
+            so, when navbar scale out, the <nav> will cover tags.
+            also mask any touch event of tags, unfortunately.
+        -->
+        <!-- /.navbar-collapse -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+					
+                    
+					
+					
+                </ul>
+            </div>
+        </div>
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+//    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        // CLOSE
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        // OPEN
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+<!-- Main Content -->
+
+<!--only post-->
+
+
+<img class="wechat-title-img"
+     src="http://occl9k36n.bkt.clouddn.com/my_homepage_img2.jpg">
+
+
+<style>
+    
+    header.intro-header {
+        background-image: url('http://occl9k36n.bkt.clouddn.com/my_homepage_img2.jpg')
+    }
+
+    
+</style>
+
+<header class="intro-header">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 text-center">
+                <div class="post-heading">
+                    <h1>ButterKnife的使用与原理(1)</h1>
+                    
+                    <span class="meta">
+                         作者 Caofengbin
+                        <span>
+                          日期 2017-01-20
+                         </span>
+                    </span>
+                    <div class="tags text-center">
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="post-title-haojen">
+        <span>
+            ButterKnife的使用与原理(1)
+        </span>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+            <!-- Post Container -->
+            <div class="col-lg-8 col-lg-offset-1 col-sm-9 post-container">
+                <h2 id="1-概述"><a href="#1-概述" class="headerlink" title="1.概述"></a>1.概述</h2><p>&emsp;&emsp;ButterKnife是一个<strong>依托 Java 的注解机制来实现辅助代码生成的框架</strong>。对于注解机制还不是太熟悉或者了解的同学，可以参见笔者自己总结的一篇文章–<a href="https://caofengbin.github.io/2017/01/19/annotation-base-use/" target="_blank" rel="external">Java注解机制基础</a>。本文大致讲述ButterKnife常用的特性和使用过程中的一些要点。并分别通过反射机制以及apt(Annotation Processing Tool)模拟实现ButterKnife的效果。希望可以让大家了解到 Java 注解机制的强大之处，并对 ButterKnife，Dagger  这样类似的框架有一定的认识。</p>
+<hr>
+<h2 id="2-ButtrerKnife的简介与使用"><a href="#2-ButtrerKnife的简介与使用" class="headerlink" title="2.ButtrerKnife的简介与使用"></a>2.ButtrerKnife的简介与使用</h2><center><br><img src="https://raw.githubusercontent.com/JakeWharton/butterknife/master/website/static/logo.png" alt="ButterKnife的logo)"><br></center>
+
+<p>&emsp;&emsp;作为一名Android开发，我们总是会写大量的findViewById和点击事件，像初始view、设置view监听这样简单而重复的操作，当然不会偷懒的程序员不是好程序员，自然也出现了相应的解决方案–依赖注入。而ButterKnife则是依赖注入中相对简单易懂的一个开源框架，让开发人员从这些烦人臃肿的代码中解脱出来。ButtrerKnife目前最新的版本已经更新到了8.4.0，本文的内容也是基于最新版本进行。</p>
+<h3 id="1-ButterKnife特性"><a href="#1-ButterKnife特性" class="headerlink" title="(1)ButterKnife特性"></a>(1)ButterKnife特性</h3><p>先看一下ButterKnife项目的文件概览：</p>
+<center><br><img src="http://occl9k36n.bkt.clouddn.com/2017_01_14_ButterKnife_overreview.png" alt="ButterKnife概览)"><br></center>
+
+<p>可以发现ButterKnife主要支持：</p>
+<blockquote>
+<ul>
+<li>(1)View注入：@BindView</li>
+<li>(2)常用的资源类型的注入：@BindBool,@BindColor,@BindDimen,@BindString等；</li>
+<li>(3)View事件回调函数注入：<br>View：@OnClick，@OnFocusChanged，@OnLongClick，@OnTouch<br>TextView：@OnEditorAction，@OnTextChanged<br>AdapterView：@OnItemClick，@OnItemLongClick，OnItemSelected，<br>CompoundButton：@OnCheckedChanged，<br>ViewPager：@OnPageChange</li>
+</ul>
+</blockquote>
+<h3 id="2-添加相关的依赖"><a href="#2-添加相关的依赖" class="headerlink" title="(2)添加相关的依赖"></a>(2)添加相关的依赖</h3><p>由于 <strong>Butterknife 用到了注解处理器</strong>(后文会详细的讲解注解处理器相关的内容)，所以，比起一般的框架，配置稍微多了些，需要在Gradle文件中配置：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">compile <span class="string">'com.jakewharton:butterknife:(insert latest version)'</span></div><div class="line">annotationProcessor <span class="string">'com.jakewharton:butterknife-compiler:(insert latest version)'</span></div></pre></td></tr></table></figure>
+<p>本文主要基于8.0的版本，所以配置如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">buildscript &#123;</div><div class="line">     repositories &#123;</div><div class="line">       mavenCentral()</div><div class="line">     &#125;</div><div class="line">     dependencies &#123;</div><div class="line">       classpath <span class="string">'com.android.tools.build:gradle:1.3.1'</span></div><div class="line">       classpath <span class="string">'com.neenbedankt.gradle.plugins:android-apt:1.8'</span></div><div class="line">     &#125;</div><div class="line"> &#125;</div><div class="line"> apply plugin: <span class="string">'com.neenbedankt.android-apt'</span></div><div class="line"> ...</div><div class="line"> dependencies &#123;</div><div class="line">     compile <span class="string">'com.jakewharton:butterknife:8.0.1'</span></div><div class="line">    annotationProcessor <span class="string">'com.jakewharton:butterknife-compiler:8.0.1'</span></div><div class="line"> &#125;</div></pre></td></tr></table></figure>
+<h3 id="3-在Activity中注入示例"><a href="#3-在Activity中注入示例" class="headerlink" title="(3)在Activity中注入示例"></a>(3)在Activity中注入示例</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">ExampleActivity</span> <span class="keyword">extends</span> <span class="title">Activity</span> </span>&#123;</div><div class="line">  <span class="meta">@BindView</span>(R.id.title) TextView title;</div><div class="line">  <span class="meta">@BindView</span>(R.id.subtitle) TextView subtitle;</div><div class="line">  <span class="meta">@BindView</span>(R.id.footer) TextView footer;</div><div class="line"></div><div class="line">  <span class="meta">@Override</span> <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onCreate</span><span class="params">(Bundle savedInstanceState)</span> </span>&#123;</div><div class="line">    <span class="keyword">super</span>.onCreate(savedInstanceState);</div><div class="line">    setContentView(R.layout.simple_activity);</div><div class="line">    ButterKnife.bind(<span class="keyword">this</span>);</div><div class="line">    <span class="comment">// TODO Use fields...</span></div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h3 id="4-注入资源类型示例"><a href="#4-注入资源类型示例" class="headerlink" title="(4)注入资源类型示例"></a>(4)注入资源类型示例</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">ExampleActivity</span> <span class="keyword">extends</span> <span class="title">Activity</span> </span>&#123;</div><div class="line">  <span class="meta">@BindString</span>(R.string.title) String title;</div><div class="line">  <span class="meta">@BindDrawable</span>(R.drawable.graphic) Drawable graphic;</div><div class="line">  <span class="meta">@BindColor</span>(R.color.red) <span class="keyword">int</span> red; <span class="comment">// int or ColorStateList field</span></div><div class="line">  <span class="meta">@BindDimen</span>(R.dimen.spacer) Float spacer; <span class="comment">// int (for pixel size) or float (for exact value) field</span></div><div class="line">  <span class="comment">// ...</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h3 id="5-在Fragment中注入示例"><a href="#5-在Fragment中注入示例" class="headerlink" title="(5)在Fragment中注入示例"></a>(5)在Fragment中注入示例</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">FancyFragment</span> <span class="keyword">extends</span> <span class="title">Fragment</span> </span>&#123;</div><div class="line">  <span class="meta">@BindView</span>(R.id.button1) Button button1;</div><div class="line">  <span class="meta">@BindView</span>(R.id.button2) Button button2;</div><div class="line"></div><div class="line">  <span class="meta">@Override</span> <span class="function"><span class="keyword">public</span> View <span class="title">onCreateView</span><span class="params">(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)</span> </span>&#123;</div><div class="line">    View view = inflater.inflate(R.layout.fancy_fragment, container, <span class="keyword">false</span>);</div><div class="line">    ButterKnife.bind(<span class="keyword">this</span>, view);</div><div class="line">    <span class="comment">// TODO Use fields...</span></div><div class="line">    <span class="keyword">return</span> view;</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h3 id="6-注入回调函数示例"><a href="#6-注入回调函数示例" class="headerlink" title="(6)注入回调函数示例"></a>(6)注入回调函数示例</h3><p>下面是几种注入回调函数的方法示例:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// 带有 Button 参数</span></div><div class="line"><span class="meta">@OnClick</span>(R.id.submit)</div><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">sayHi</span><span class="params">(Button button)</span> </span>&#123;</div><div class="line">  button.setText(<span class="string">"Hello!"</span>);</div><div class="line">&#125;</div><div class="line"> </div><div class="line"><span class="comment">// 不带参数</span></div><div class="line"><span class="meta">@OnClick</span>(R.id.submit)</div><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">submit</span><span class="params">()</span> </span>&#123;</div><div class="line">  <span class="comment">// TODO submit data to server...</span></div><div class="line">&#125;</div><div class="line"> </div><div class="line"><span class="comment">// 同时注入多个 View 事件</span></div><div class="line"><span class="meta">@OnClick</span>(&#123; R.id.door1, R.id.door2, R.id.door3 &#125;)</div><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">pickDoor</span><span class="params">(DoorView door)</span> </span>&#123;</div><div class="line">  <span class="keyword">if</span> (door.hasPrizeBehind()) &#123;</div><div class="line">    Toast.makeText(<span class="keyword">this</span>, <span class="string">"You win!"</span>, LENGTH_SHORT).show();</div><div class="line">  &#125; <span class="keyword">else</span> &#123;</div><div class="line">    Toast.makeText(<span class="keyword">this</span>, <span class="string">"Try again"</span>, LENGTH_SHORT).show();</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h3 id="7-BINDING-RESET"><a href="#7-BINDING-RESET" class="headerlink" title="(7)BINDING RESET"></a>(7)BINDING RESET</h3><p>如果需要<strong>在界面销毁的时候，把注入的View设置为 Null</strong>，可以采用如下的方式：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">FancyFragment</span> <span class="keyword">extends</span> <span class="title">Fragment</span> </span>&#123;</div><div class="line">  <span class="meta">@BindView</span>(R.id.button1) Button button1;</div><div class="line">  <span class="meta">@BindView</span>(R.id.button2) Button button2;</div><div class="line">  <span class="keyword">private</span> Unbinder unbinder;</div><div class="line"></div><div class="line">  <span class="meta">@Override</span> </div><div class="line">  <span class="function"><span class="keyword">public</span> View <span class="title">onCreateView</span><span class="params">(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)</span> </span>&#123;</div><div class="line">    View view = inflater.inflate(R.layout.fancy_fragment, container, <span class="keyword">false</span>);</div><div class="line">    unbinder = ButterKnife.bind(<span class="keyword">this</span>, view);</div><div class="line">    <span class="comment">// TODO Use fields...</span></div><div class="line">    <span class="keyword">return</span> view;</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="meta">@Override</span> <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onDestroyView</span><span class="params">()</span> </span>&#123;</div><div class="line">    <span class="keyword">super</span>.onDestroyView();</div><div class="line">    unbinder.unbind();</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>可以看到<strong>ButterKnife返回了一个Unbinder实例</strong>，主要利用Unbinder的unbind()方法。</p>
+<p>更多ButterKnife的相关使用示例可以参见<a href="https://jakewharton.github.io/butterknife/" target="_blank" rel="external">ButterKnife官方文档链接</a>以及<a href="https://github.com/JakeWharton/butterknife" target="_blank" rel="external">GitHub上的ButterKnife链接</a></p>
+<hr>
+<h2 id="3-使用ButtrerKnife的相关注意事项"><a href="#3-使用ButtrerKnife的相关注意事项" class="headerlink" title="3.使用ButtrerKnife的相关注意事项"></a>3.使用ButtrerKnife的相关注意事项</h2><h3 id="1-ButterKnife的优势"><a href="#1-ButterKnife的优势" class="headerlink" title="(1)ButterKnife的优势"></a>(1)ButterKnife的优势</h3><p>通过上文的描述使用，我们可以发现ButterKnife的优势主要体现在如下几点：</p>
+<blockquote>
+<ul>
+<li>(1)强大的View及资源绑定，以及多个事件处理功能，简化代码，提升开发效率；</li>
+<li>(2)方便的处理Adapter里的ViewHolder绑定问题；</li>
+<li>(3)<strong>使用apt技术在编译时生成代码，运行时不会影响应用的效率；</strong></li>
+<li>(4)<strong>增加的代码的清晰度和可读性；</strong></li>
+</ul>
+</blockquote>
+<h3 id="2-ButterKnife使用的几个注意点"><a href="#2-ButterKnife使用的几个注意点" class="headerlink" title="(2)ButterKnife使用的几个注意点"></a>(2)ButterKnife使用的几个注意点</h3><blockquote>
+<ul>
+<li>(1)在Activity中注入View时，ButterKnife.bind(this)的调用必须在setContentView();之后，且父类bind之后，子类不需要再bind；</li>
+<li>(2)在Fragment中注入View时，需要在onCreateView()方法中，使用ButterKnife.bind(this, mRootView);</li>
+<li>(3)<strong>在Fragmet生命周期中，onDestroy()方法中需要调用unbind()方法；</strong></li>
+<li>(4)setContentView不能通过注解实现，ButterKnife中没有提供相应注解；</li>
+<li>(5)<strong>对需要注入的成员，不能用private或者static修饰</strong>，否则会报错(后文原理部分会详细的分析原因)；</li>
+<li>(6)<strong>ButterKnife7.0中一个比较大的API变化</strong>：<br>在7.0以前的版本中，叫@InjectView，在7.0版本中，叫@Bind，在8.0版本中，改成了@BindView；<br>在7.0以前的版本中使用ButterKnife.inject(this);  来进行注入<br>在7.0以后的版本中使用ButterKnife.bind(this);  来进行注入</li>
+<li>(7)ButterKnife不能在项目中的library module中使用，这是因为library中的R字段的id值不是final类型的，但是我们的应用module却是final类型的。</li>
+</ul>
+</blockquote>
+<h3 id="3-插件使用"><a href="#3-插件使用" class="headerlink" title="(3)插件使用"></a>(3)插件使用</h3><p>&emsp;&emsp;在Android Studio下有一个ButterKnife的插件android-butterknife-zelezny, 该插件可以帮助我们自动生成上述注入代码，<br>安装地址为：<a href="https://github.com/avast/android-butterknife-zelezny" target="_blank" rel="external">android-butterknife-zelezny安装地址</a><br>下面截图演示了具体的实现效果：</p>
+<center><br><img src="https://raw.githubusercontent.com/avast/android-butterknife-zelezny/master/img/butter_knife_zelezny_onclick_anim.gif" alt="插件使用效果)"><br></center>
+
+<hr>
+<h2 id="4-使用反射模拟实现ButterKnife的效果"><a href="#4-使用反射模拟实现ButterKnife的效果" class="headerlink" title="4.使用反射模拟实现ButterKnife的效果"></a>4.使用反射模拟实现ButterKnife的效果</h2><p>&emsp;&emsp;ButterKnife是一个<strong>依托Java的注解机制</strong>来实现辅助代码生成的框架。关键之处在于如何处理这些自定义的注解来生成代码。根据自定义注解时指定的Retention值不同，注解的解析方式主要分为两种：<strong>运行时解析和编译时解析</strong>。在本节，我们主要采用运行时解析的方式，来模拟实现ButterKnife的效果，加深对这个框架及java注解机制的理解。</p>
+<h3 id="1-反射相关API"><a href="#1-反射相关API" class="headerlink" title="(1)反射相关API"></a>(1)反射相关API</h3><p>&emsp;&emsp;运行时解析注解利用的核心技术就是java反射，核心接口为：AnnotatedElement，引用一下官方文档对他的解释：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">Interface AnnotatedElement</div><div class="line">Represents an annotated element of the program currently running in <span class="keyword">this</span> VM. This <span class="class"><span class="keyword">interface</span> <span class="title">allows</span> <span class="title">annotations</span> <span class="title">to</span> <span class="title">be</span> <span class="title">read</span> <span class="title">reflectively</span>. <span class="title">All</span> <span class="title">annotations</span> <span class="title">returned</span> <span class="title">by</span> <span class="title">methods</span> <span class="title">in</span> <span class="title">this</span> <span class="title">interface</span> <span class="title">are</span> <span class="title">immutable</span> <span class="title">and</span> <span class="title">serializable</span>. <span class="title">It</span> <span class="title">is</span> <span class="title">permissible</span> <span class="title">for</span> <span class="title">the</span> <span class="title">caller</span> <span class="title">to</span> <span class="title">modify</span> <span class="title">the</span> <span class="title">arrays</span> <span class="title">returned</span> <span class="title">by</span> <span class="title">accessors</span> <span class="title">for</span> <span class="title">array</span>-<span class="title">valued</span> <span class="title">enum</span> <span class="title">members</span></span>; it will have no affect on the arrays returned to other callers.</div></pre></td></tr></table></figure>
+<p>&emsp;&emsp;<strong>AnnotatedElement接口表示包含注解的元素。java.lang包中的Class和Package，以及java.lang.reflect包中的Constructer,Field和Method都实现了AnnotatedElement接口</strong>。<br>AnnotatedElement接口中常用的几个方法：</p>
+<blockquote>
+<ul>
+<li>(1) getAnnotations()：<br>Returns all annotations present on this element;</li>
+<li>(2) getAnnotation(Class<t> annotationClass)：<br>Returns this element’s annotation for the specified type if such an annotation is present, else null.</t></li>
+<li>(3) getDeclaredAnnotations()：<br>Returns all annotations that are directly present on this element.</li>
+</ul>
+</blockquote>
+<p>更多详细信息可以参见<a href="https://docs.oracle.com/javase/8/docs/api/java/lang/reflect/AnnotatedElement.html" target="_blank" rel="external">Java处理注解相关的反射API</a></p>
+<h3 id="2-实现效果"><a href="#2-实现效果" class="headerlink" title="(2)实现效果"></a>(2)实现效果</h3><p>&emsp;&emsp;基于上一节大致描述的反射相关技术，我们可以实现如下所示的效果，通过@ContentView实现了布局文件的注入，通过@BindView实现控件的注入，通过@OnClick实现简单的事件回调函数的注入。最后在onCreate方法中调用<strong>ViewInjectUtils.bind(this);</strong>进行相应的绑定</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line"><span class="meta">@ContentView</span>(R.layout.activity_test_annoattion)</div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">TestAnnotationActivity</span> <span class="keyword">extends</span> <span class="title">AppCompatActivity</span> </span>&#123;</div><div class="line"></div><div class="line">    <span class="meta">@BindView</span>(R.id.testButton)</div><div class="line">    <span class="keyword">private</span> Button mButton;</div><div class="line"></div><div class="line">    <span class="meta">@OnClick</span>(R.id.testButton)</div><div class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">onClick</span><span class="params">(View view)</span> </span>&#123;</div><div class="line">        mButton.setText(<span class="string">"我是click后的文字内容"</span>);</div><div class="line">        Toast.makeText(<span class="keyword">this</span>, <span class="string">"按钮被点击了"</span>, Toast.LENGTH_SHORT).show();</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">onCreate</span><span class="params">(Bundle savedInstanceState)</span> </span>&#123;</div><div class="line">        <span class="keyword">super</span>.onCreate(savedInstanceState);</div><div class="line">        ViewInjectUtils.bind(<span class="keyword">this</span>);</div><div class="line">        mButton.setText(<span class="string">"我是click前的Button内容"</span>);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h3 id="3-详细实现原理"><a href="#3-详细实现原理" class="headerlink" title="(3)详细实现原理"></a>(3)详细实现原理</h3><p>首选是需要定义三个相关的注解</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line"><span class="meta">@Target</span>(ElementType.TYPE)</div><div class="line"><span class="meta">@Retention</span>(RetentionPolicy.RUNTIME)</div><div class="line"><span class="keyword">public</span> <span class="meta">@interface</span> ContentView &#123;</div><div class="line">    <span class="function"><span class="keyword">int</span> <span class="title">value</span><span class="params">()</span></span>;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="meta">@Target</span>(ElementType.FIELD)</div><div class="line"><span class="meta">@Retention</span>(RetentionPolicy.RUNTIME)</div><div class="line"><span class="keyword">public</span> <span class="meta">@interface</span> BindView &#123;</div><div class="line">    <span class="function"><span class="keyword">int</span> <span class="title">value</span><span class="params">()</span></span>;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="meta">@Target</span>(ElementType.METHOD)</div><div class="line"><span class="meta">@Retention</span>(RetentionPolicy.RUNTIME)</div><div class="line"><span class="keyword">public</span> <span class="meta">@interface</span> OnClick &#123;</div><div class="line">    <span class="keyword">int</span>[] value();</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>接下来就是<strong>ViewInjectUtils.bind(this);</strong>的具体实现了，整个注解的处理逻辑全在这个里面。</p>
+<p>大致框架如下：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ViewInjectUtils</span> </span>&#123;</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">bind</span><span class="params">(Activity activity)</span> </span>&#123;</div><div class="line">        injectContentView(activity);</div><div class="line">        injectView(activity);</div><div class="line">        injectOnClice(activity);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>bind(Activity activity)方法里面很简单，就是依次处理一开始定义的三个注解：</p>
+<h4 id="方法1：处理-ContentView"><a href="#方法1：处理-ContentView" class="headerlink" title="方法1：处理@ContentView"></a>方法1：处理@ContentView</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">injectContentView</span><span class="params">(Activity activity)</span> </span>&#123;</div><div class="line">        Class&lt;? extends Activity&gt; clazz = activity.getClass();</div><div class="line">        ContentView contentView = clazz.getAnnotation(ContentView.class);</div><div class="line">        <span class="keyword">if</span>(contentView != <span class="keyword">null</span>) &#123;</div><div class="line">            <span class="comment">//如果这个activity上存在@ContentView注解，就取出这个注解对应的value值</span></div><div class="line">            <span class="keyword">int</span> layoutId = contentView.value();</div><div class="line">            <span class="comment">//也就是布局文件的id。</span></div><div class="line">            <span class="keyword">try</span> &#123;</div><div class="line">                Method setViewMethod = clazz.getMethod(<span class="string">"setContentView"</span>,<span class="keyword">int</span>.class);</div><div class="line">                setViewMethod.invoke(activity,layoutId);</div><div class="line">            &#125; <span class="keyword">catch</span> (Exception e) &#123;</div><div class="line">                e.printStackTrace();</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div></pre></td></tr></table></figure>
+<p>可以看到首先是拿到这个class的@ContentView注解，其value就是待注入的布局文件id，然后再通过反射调用setContentView方法，完成布局文件的注入。</p>
+<h4 id="方法2：处理-BindView"><a href="#方法2：处理-BindView" class="headerlink" title="方法2：处理@BindView"></a>方法2：处理@BindView</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">injectView</span><span class="params">(Activity activity)</span> </span>&#123;</div><div class="line">    Class&lt;? extends Activity&gt; clazz = activity.getClass();</div><div class="line">    <span class="comment">// 获得activity的所有成员变量</span></div><div class="line">    Field[] fields = clazz.getDeclaredFields();</div><div class="line">    <span class="keyword">for</span>(Field field : fields) &#123;</div><div class="line">        <span class="comment">//获得每个成员变量上面的BindView注解</span></div><div class="line">        BindView bindView = field.getAnnotation(BindView.class);</div><div class="line">        <span class="keyword">if</span>(bindView != <span class="keyword">null</span>) &#123;</div><div class="line">            <span class="comment">// 得到相应的控件id</span></div><div class="line">            <span class="keyword">int</span> viewId = bindView.value();</div><div class="line">            View view = activity.findViewById(viewId);</div><div class="line">            <span class="keyword">try</span> &#123;</div><div class="line">                <span class="comment">// 允许访问私有字段</span></div><div class="line">                field.setAccessible(<span class="keyword">true</span>);</div><div class="line">                <span class="comment">// 将获得指定id的View设置给使用了@BindView的field。</span></div><div class="line">                field.set(activity,view);</div><div class="line">            &#125; <span class="keyword">catch</span> (IllegalAccessException e) &#123;</div><div class="line">                e.printStackTrace();</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>首先获得所有Field，然后遍历带有@Bindview注解的field，拿到@Bindview注解的value–即View的id，然后通过activity.findViewById(viewId);获得这个View，最后将它设置给field。</p>
+<h4 id="方法3：处理-OnClick"><a href="#方法3：处理-OnClick" class="headerlink" title="方法3：处理@OnClick"></a>方法3：处理@OnClick</h4><p>处理@OnClick，我们需要用到动态代理的技术，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// 处理@OnClick注解</span></div><div class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">injectOnClick</span><span class="params">(<span class="keyword">final</span> Activity activity)</span> </span>&#123;</div><div class="line">        Class&lt;? extends Activity&gt; clazz = activity.getClass();</div><div class="line">        Method[] methods = clazz.getDeclaredMethods();</div><div class="line">        <span class="keyword">for</span>(<span class="keyword">final</span> Method tempMethod : methods) &#123;</div><div class="line">            <span class="comment">// 获得使用了@OnClick注解的方法</span></div><div class="line">            OnClick click = tempMethod.getAnnotation(OnClick.class);</div><div class="line">            <span class="keyword">if</span>(click != <span class="keyword">null</span>) &#123;</div><div class="line">                <span class="keyword">int</span>[] viewIds = click.value();</div><div class="line">                tempMethod.setAccessible(<span class="keyword">true</span>);</div><div class="line"></div><div class="line">                Object myListener = Proxy.newProxyInstance(View.OnClickListener.class.getClassLoader(),</div><div class="line">                        <span class="keyword">new</span> Class[]&#123;View.OnClickListener.class&#125;, <span class="keyword">new</span> InvocationHandler() &#123;</div><div class="line">                            <span class="meta">@Override</span></div><div class="line">                            <span class="function"><span class="keyword">public</span> Object <span class="title">invoke</span><span class="params">(Object proxy, Method method, Object[] args)</span> <span class="keyword">throws</span> Throwable </span>&#123;</div><div class="line">                                <span class="comment">// 调用带有onClick注解的method方法</span></div><div class="line">                                <span class="keyword">return</span> tempMethod.invoke(activity, args);</div><div class="line">                            &#125;</div><div class="line">                        &#125;);</div><div class="line"></div><div class="line">                <span class="keyword">try</span> &#123;</div><div class="line">                    <span class="keyword">for</span>(<span class="keyword">int</span> id : viewIds) &#123;</div><div class="line">                        View tempView = activity.findViewById(id);</div><div class="line">                        Method setOnClickerListener = tempView.getClass().getMethod(<span class="string">"setOnClickListener"</span>,</div><div class="line">                                View.OnClickListener.class);</div><div class="line">                        <span class="comment">// 通过动态代理调用自己设置的myListener</span></div><div class="line">                        setOnClickerListener.invoke(tempView, myListener);</div><div class="line">                    &#125;</div><div class="line">                &#125; <span class="keyword">catch</span> (Exception e) &#123;</div><div class="line">                    e.printStackTrace();</div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div></pre></td></tr></table></figure>
+<p>当程序运行调用setOnClickListener的时候，会传入设置的代理对象myListener，在myListener中，invoke调用的是带有@OnClick注解的method方法。这样就实现了我们的目的。</p>
+<p>&emsp;&emsp;到这里我们就通过反射机制模拟实现了ButterKnife的效果了。这种方式虽然简单，但是<strong>反射多多少少会有性能上的损耗。ButterKnife最新版本也不是通过反射来完成的，而是利用APT(Annotation Processing Tool)编译时解析技术</strong>，动态生成绑定事件或者View的java代码，然后在运行的时候，直接调用bind方法完成绑定。在下一篇文章中，会详细分析apt技术的关键点，并通过apt模拟实现ButterKnife的效果。</p>
+<hr>
+<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><p><a href="http://stormzhang.com/openandroid/android/2014/01/12/android-butterknife/" target="_blank" rel="external">1.ButterKnife–View注入框架</a><br><a href="http://blog.csdn.net/ohhh1988/article/details/51330572" target="_blank" rel="external">2.android使用butterknife InjectView和BindView</a><br><a href="https://jakewharton.github.io/butterknife/" target="_blank" rel="external">3.ButtrerKnife官方文档链接</a><br><a href="http://blog.csdn.net/itjianghuxiaoxiong/article/details/50177549" target="_blank" rel="external">4.ButterKnife使用详解</a></p>
+
+                <hr>
+                
+
+                <ul class="pager">
+                    
+                    
+                    <li class="next">
+                        <a href="/2017/01/19/annotation-base-use/" data-toggle="tooltip" data-placement="top"
+                           title="Java注解机制基础">Next Post &rarr;</a>
+                    </li>
+                    
+                </ul>
+
+                
+
+                
+
+            </div>
+
+            <div class="hidden-xs col-sm-3 toc-col">
+                <div class="toc-wrap">
+                    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-概述"><span class="toc-text">1.概述</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-ButtrerKnife的简介与使用"><span class="toc-text">2.ButtrerKnife的简介与使用</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-ButterKnife特性"><span class="toc-text">(1)ButterKnife特性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-添加相关的依赖"><span class="toc-text">(2)添加相关的依赖</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-在Activity中注入示例"><span class="toc-text">(3)在Activity中注入示例</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-注入资源类型示例"><span class="toc-text">(4)注入资源类型示例</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-在Fragment中注入示例"><span class="toc-text">(5)在Fragment中注入示例</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-注入回调函数示例"><span class="toc-text">(6)注入回调函数示例</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-BINDING-RESET"><span class="toc-text">(7)BINDING RESET</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-使用ButtrerKnife的相关注意事项"><span class="toc-text">3.使用ButtrerKnife的相关注意事项</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-ButterKnife的优势"><span class="toc-text">(1)ButterKnife的优势</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-ButterKnife使用的几个注意点"><span class="toc-text">(2)ButterKnife使用的几个注意点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-插件使用"><span class="toc-text">(3)插件使用</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-使用反射模拟实现ButterKnife的效果"><span class="toc-text">4.使用反射模拟实现ButterKnife的效果</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-反射相关API"><span class="toc-text">(1)反射相关API</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-实现效果"><span class="toc-text">(2)实现效果</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-详细实现原理"><span class="toc-text">(3)详细实现原理</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#方法1：处理-ContentView"><span class="toc-text">方法1：处理@ContentView</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#方法2：处理-BindView"><span class="toc-text">方法2：处理@BindView</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#方法3：处理-OnClick"><span class="toc-text">方法3：处理@OnClick</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考文献"><span class="toc-text">参考文献</span></a></li></ol>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Sidebar Container -->
+
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <!-- no hr -->
+                    <h5 class="text-center">
+                        <a href="/tags/">FEATURED TAGS</a>
+                    </h5>
+                    <div class="tags">
+                        
+                    </div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <div style="margin-top: 20px;">
+                    <h5 class="text-center">FRIENDS</h5>
+                    <ul class="list-inline text-center">
+                        
+                        <li><a href="http://stormzhang.com/posts/">stormzhang的博客链接</a></li>
+                        
+                        <li><a href="http://blog.csdn.net/sinyu890807/article/list/1">郭霖博客频道</a></li>
+                        
+                    </ul>
+                </div>
+                
+            </div>
+        </div>
+
+    </div>
+</article>
+
+
+
+
+
+
+<!-- Footer -->
+<!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 text-center">
+                <br>
+                <ul class="list-inline text-center">
+                
+                
+                    <li>
+                        <a target="_blank" href="https://twitter.com/ehazon">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-twitter fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                
+                
+                    <li>
+                        <a target="_blank" href="https://www.zhihu.com/people/megahertz">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa  fa-stack-1x fa-inverse">知</i>
+                            </span>
+                        </a>
+                    </li>
+                
+
+                
+                    <li>
+                        <a target="_blank" href="http://weibo.com/haojen">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-weibo fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                
+
+                
+
+                
+                    <li>
+                        <a target="_blank"  href="https://github.com/haojen">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                
+
+                
+
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; Caofenbin 2017
+                    <br>
+                    <span id="busuanzi_container_site_pv" style="font-size: 12px;">PV: <span id="busuanzi_value_site_pv"></span> Times</span>
+                    <br>
+                    Theme by <a href="https://haojen.github.io/">Haojen Ma</a>
+                </p>
+
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js"></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js"></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/blog.js"></script>
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async("http://haojen.github.io/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("//cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+<!-- Google Analytics -->
+
+
+
+<!-- Baidu Tongji -->
+
+
+<!-- swiftype -->
+<script type="text/javascript">
+  (function(w,d,t,u,n,s,e){w['SwiftypeObject']=n;w[n]=w[n]||function(){
+  (w[n].q=w[n].q||[]).push(arguments);};s=d.createElement(t);
+  e=d.getElementsByTagName(t)[0];s.async=1;s.src=u;e.parentNode.insertBefore(s,e);
+  })(window,document,'script','//s.swiftypecdn.com/install/v2/st.js','_st');
+
+  _st('install','null','2.0.0');
+</script>
+
+<script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<!--wechat title img-->
+<img class="wechat-title-img" src="null">
+</body>
+
+</html>
