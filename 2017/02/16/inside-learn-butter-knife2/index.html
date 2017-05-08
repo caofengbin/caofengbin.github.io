@@ -13,7 +13,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="#600090">
     <link rel="shortcut icon" href="https://cdn4.iconfinder.com/data/icons/ionicons/512/icon-person-128.png">
-    <link rel="alternate" type="application/atom+xml" title="Caofenbin" href="/atom.xml">
+    <link rel="alternate" type="application/atom+xml" title="Caofengbin" href="/atom.xml">
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css">
     <link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.css">
     <title>
@@ -56,7 +56,7 @@
             </button>
             <a class="navbar-brand animated pulse" href="/">
                 <span class="brand-logo">
-                    Caofenbin
+                    Caofengbin
                 </span>
                 's Blog
             </a>
@@ -165,7 +165,7 @@
         <div class="row">
             <!-- Post Container -->
             <div class="col-lg-8 col-lg-offset-1 col-sm-9 post-container">
-                <h1 id="ButterKnife的使用与原理-2"><a href="#ButterKnife的使用与原理-2" class="headerlink" title="ButterKnife的使用与原理(2)"></a>ButterKnife的使用与原理(2)</h1><h2 id="1-前言"><a href="#1-前言" class="headerlink" title="1.前言"></a>1.前言</h2><p>&emsp;&emsp;本文是上一篇文章的续篇。上次大致介绍了ButterKnife的基本使用以及通过反射技术模拟实现了简易的ButterKnife效果。但是反射多少会有性能上的损耗。<strong>ButterKnife最新版本也不是通过反射来完成的，而是利用APT(Annotation Processing Tool)编译时解析技术，动态生成绑定事件或者View的java代码</strong>。网上关于ButterKnife源码分析的文章也很多。本文试图利用apt技术自己模拟实现一个简易的ButterKnife，来提升对ButterKnife，Dagger等类似框架的认识，并详细介绍注解处理器(Annotation Processor)的使用。</p>
+                <h2 id="1-前言"><a href="#1-前言" class="headerlink" title="1.前言"></a>1.前言</h2><p>&emsp;&emsp;本文是上一篇文章的续篇。上次大致介绍了ButterKnife的基本使用以及通过反射技术模拟实现了简易的ButterKnife效果。但是反射多少会有性能上的损耗。<strong>ButterKnife最新版本也不是通过反射来完成的，而是利用APT(Annotation Processing Tool)编译时解析技术，动态生成绑定事件或者View的java代码</strong>。网上关于ButterKnife源码分析的文章也很多。本文试图利用apt技术自己模拟实现一个简易的ButterKnife，来提升对ButterKnife，Dagger等类似框架的认识，并详细介绍注解处理器(Annotation Processor)的使用。</p>
 <hr>
 <h2 id="2-编译时解析注解技术简介"><a href="#2-编译时解析注解技术简介" class="headerlink" title="2.编译时解析注解技术简介"></a>2.编译时解析注解技术简介</h2><h3 id="1-Java编译器对Annotation的处理"><a href="#1-Java编译器对Annotation的处理" class="headerlink" title="(1) Java编译器对Annotation的处理"></a>(1) Java编译器对Annotation的处理</h3><p><a href="http://openjdk.java.net/groups/compiler/doc/compilation-overview/index.html" target="_blank" rel="external">OpenJDK对java编译过程的解释</a></p>
 <p>Java编译过程图解：</p>
@@ -321,8 +321,8 @@
                 <ul class="pager">
                     
                     <li class="previous">
-                        <a href="/2099/12/31/aaa-top-file/" data-toggle="tooltip" data-placement="top"
-                           title="逍遥游">&larr; Previous Post</a>
+                        <a href="/2017/05/08/httpsAndroid/" data-toggle="tooltip" data-placement="top"
+                           title="HTTPS原理浅析及其在Android中的使用">&larr; Previous Post</a>
                     </li>
                     
                     
@@ -341,7 +341,7 @@
 
             <div class="hidden-xs col-sm-3 toc-col">
                 <div class="toc-wrap">
-                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#ButterKnife的使用与原理-2"><span class="toc-text">ButterKnife的使用与原理(2)</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-前言"><span class="toc-text">1.前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-编译时解析注解技术简介"><span class="toc-text">2.编译时解析注解技术简介</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-Java编译器对Annotation的处理"><span class="toc-text">(1) Java编译器对Annotation的处理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-apt-Annotation-Processor-Tool-相关技术简介"><span class="toc-text">(2) apt(Annotation Processor Tool)相关技术简介</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-定义注解"><span class="toc-text">3.定义注解</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-定义注解处理器"><span class="toc-text">4.定义注解处理器</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-虚处理器AbstractProcessor"><span class="toc-text">(1)虚处理器AbstractProcessor</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-注册自定义的注解处理器"><span class="toc-text">(2)注册自定义的注解处理器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-init-ProcessingEnvironment-processingEnv-方法的实现"><span class="toc-text">(3) init(ProcessingEnvironment processingEnv)方法的实现</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-getSupportedAnnotationTypes-方法的实现"><span class="toc-text">(4) getSupportedAnnotationTypes()方法的实现</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-getSupportedSourceVersion-方法的实现"><span class="toc-text">(5) getSupportedSourceVersion()方法的实现</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-注解处理器核心方法process-的实现"><span class="toc-text">5.注解处理器核心方法process()的实现</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-整体实现"><span class="toc-text">(1) 整体实现</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-Elements的作用"><span class="toc-text">(2) Elements的作用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-处理-BindView注解"><span class="toc-text">(3) 处理@BindView注解</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-处理-ContentView和-OnClick"><span class="toc-text">(4) 处理@ContentView和@OnClick</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-数据模型"><span class="toc-text">(5) 数据模型</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#6-代码生成"><span class="toc-text">6.代码生成</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-生成代码的方法"><span class="toc-text">(1) 生成代码的方法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-javapoet的使用"><span class="toc-text">(2) javapoet的使用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-生成最终的代码"><span class="toc-text">(3) 生成最终的代码</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#7-调用生成的代码"><span class="toc-text">7.调用生成的代码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#8-结语"><span class="toc-text">8.结语</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考文献"><span class="toc-text">参考文献</span></a></li></ol></li></ol>
+                    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-前言"><span class="toc-text">1.前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-编译时解析注解技术简介"><span class="toc-text">2.编译时解析注解技术简介</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-Java编译器对Annotation的处理"><span class="toc-text">(1) Java编译器对Annotation的处理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-apt-Annotation-Processor-Tool-相关技术简介"><span class="toc-text">(2) apt(Annotation Processor Tool)相关技术简介</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-定义注解"><span class="toc-text">3.定义注解</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-定义注解处理器"><span class="toc-text">4.定义注解处理器</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-虚处理器AbstractProcessor"><span class="toc-text">(1)虚处理器AbstractProcessor</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-注册自定义的注解处理器"><span class="toc-text">(2)注册自定义的注解处理器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-init-ProcessingEnvironment-processingEnv-方法的实现"><span class="toc-text">(3) init(ProcessingEnvironment processingEnv)方法的实现</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-getSupportedAnnotationTypes-方法的实现"><span class="toc-text">(4) getSupportedAnnotationTypes()方法的实现</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-getSupportedSourceVersion-方法的实现"><span class="toc-text">(5) getSupportedSourceVersion()方法的实现</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-注解处理器核心方法process-的实现"><span class="toc-text">5.注解处理器核心方法process()的实现</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-整体实现"><span class="toc-text">(1) 整体实现</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-Elements的作用"><span class="toc-text">(2) Elements的作用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-处理-BindView注解"><span class="toc-text">(3) 处理@BindView注解</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-处理-ContentView和-OnClick"><span class="toc-text">(4) 处理@ContentView和@OnClick</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-数据模型"><span class="toc-text">(5) 数据模型</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#6-代码生成"><span class="toc-text">6.代码生成</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-生成代码的方法"><span class="toc-text">(1) 生成代码的方法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-javapoet的使用"><span class="toc-text">(2) javapoet的使用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-生成最终的代码"><span class="toc-text">(3) 生成最终的代码</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#7-调用生成的代码"><span class="toc-text">7.调用生成的代码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#8-结语"><span class="toc-text">8.结语</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考文献"><span class="toc-text">参考文献</span></a></li></ol>
                 </div>
             </div>
         </div>
@@ -435,7 +435,7 @@
 
                 </ul>
                 <p class="copyright text-muted">
-                    Copyright &copy; Caofenbin 2017
+                    Copyright &copy; Caofengbin 2017
                     <br>
                     <span id="busuanzi_container_site_pv" style="font-size: 12px;">PV: <span id="busuanzi_value_site_pv"></span> Times</span>
                     <br>

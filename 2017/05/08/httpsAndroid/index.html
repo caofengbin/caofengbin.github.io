@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- Head tag -->
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="caofengbin在 Github 上的个人博客">
+    <meta name="keyword" content="null">
+    <meta name="theme-color" content="#600090">
+    <meta name="msapplication-navbutton-color" content="#600090">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="#600090">
+    <link rel="shortcut icon" href="https://cdn4.iconfinder.com/data/icons/ionicons/512/icon-person-128.png">
+    <link rel="alternate" type="application/atom+xml" title="Caofengbin" href="/atom.xml">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css">
+    <link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.css">
+    <title>
+        
+        HTTPS原理浅析及其在Android中的使用｜caofengbin&#39;s blog
+        
+    </title>
+
+    <link rel="canonical" href="http://haojen.github.io/2017/05/08/httpsAndroid/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/blog-style.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+</head>
+
+<style>
+
+    header.intro-header {
+        background-image: url('http://occl9k36n.bkt.clouddn.com/2017_01_21_header_top_bg.jpg')
+    }
+</style>
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="" class="animated fadeIn">
+<!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top " id="nav-top" data-ispost = "true" data-istags="false
+" data-ishome = "false" >
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand animated pulse" href="/">
+                <span class="brand-logo">
+                    Caofengbin
+                </span>
+                's Blog
+            </a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Known Issue, found by Hux:
+            <nav>'s height woule be hold on by its content.
+            so, when navbar scale out, the <nav> will cover tags.
+            also mask any touch event of tags, unfortunately.
+        -->
+        <!-- /.navbar-collapse -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+					
+                    
+					
+					
+                </ul>
+            </div>
+        </div>
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+//    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        // CLOSE
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        // OPEN
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+<!-- Main Content -->
+
+<!--only post-->
+
+
+<img class="wechat-title-img"
+     src="http://occl9k36n.bkt.clouddn.com/my_homepage_img2.jpg">
+
+
+<style>
+    
+    header.intro-header {
+        background-image: url('http://occl9k36n.bkt.clouddn.com/my_homepage_img2.jpg')
+    }
+
+    
+</style>
+
+<header class="intro-header">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 text-center">
+                <div class="post-heading">
+                    <h1>HTTPS原理浅析及其在Android中的使用</h1>
+                    
+                    <span class="meta">
+                         作者 Caofengbin
+                        <span>
+                          日期 2017-05-08
+                         </span>
+                    </span>
+                    <div class="tags text-center">
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="post-title-haojen">
+        <span>
+            HTTPS原理浅析及其在Android中的使用
+        </span>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+            <!-- Post Container -->
+            <div class="col-lg-8 col-lg-offset-1 col-sm-9 post-container">
+                <p>&emsp;&emsp;本文首先分析HTTP协议在安全性上的不足，进而阐述HTTPS实现安全通信的关键技术点和原理。然后通过抓包分析HTTPS协议的握手以及通信过程。最后总结一下自己在开发过程中遇到的HTTPS相关的问题，并给出当前项目中对HTTPS问题的系统解决方案，以供总结和分享。如有不当之处，欢迎批评和指正。</p>
+<hr>
+<h2 id="1-HTTP协议的不足"><a href="#1-HTTP协议的不足" class="headerlink" title="1.HTTP协议的不足"></a>1.HTTP协议的不足</h2><p>&emsp;&emsp;HTTP1.x在传输数据时，所有传输的内容都是明文，客户端和服务器端都无法验证对方的身份，存在的问题如下：</p>
+<blockquote>
+<ul>
+<li>通信使用明文(不加密)，内容可能会被窃听；</li>
+<li>不验证通信方的身份，有可能遭遇伪装；</li>
+<li>无法证明报文的完整性，所以有可能已遭篡改；</li>
+</ul>
+</blockquote>
+<p>&emsp;&emsp;其实这些问题不仅在HTTP上出现，<strong>其他未加密的协议中也会存在这类问题</strong>。</p>
+<h3 id="1-通信使用明文可能会被窃听"><a href="#1-通信使用明文可能会被窃听" class="headerlink" title="(1) 通信使用明文可能会被窃听"></a>(1) 通信使用明文可能会被窃听</h3><p>&emsp;&emsp;按TCP/IP协议族的工作机制，<strong>互联网上的任何角落都存在通信内容被窃听的风险</strong>。而HTTP协议本身不具备加密的功能，所传输的都是明文。即使已经经过过加密处理的通信，也会被窥视到通信内容，这点和未加密的通信是相同的。只是说如果通信经过加密，就有可能让人无法破解报文信息的含义，<strong>但加密处理后的报文信息本身还是会被看到的</strong>。</p>
+<h3 id="2-不验证通信方的身份可能遭遇伪装"><a href="#2-不验证通信方的身份可能遭遇伪装" class="headerlink" title="(2) 不验证通信方的身份可能遭遇伪装"></a>(2) 不验证通信方的身份可能遭遇伪装</h3><p>&emsp;&emsp;在HTTP协议通信时，由于<strong>不存在确认通信方的处理步骤，因此任何人都可以发起请求</strong>。另外，服务器只要接收到请求，不管对方是谁都会返回一个响应。因此不确认通信方，存在以下隐患：</p>
+<blockquote>
+<ul>
+<li>无法确定请求发送至目标的Web服务器是否是按真实意图返回响应的那台服务器。<strong>有可能是已伪装的 Web 服务器</strong>；</li>
+<li>无法确定响应返回到的客户端是否是按真实意图接收响应的那个客户端。有可能是已伪装的客户端；</li>
+<li>无法确定正在通信的对方是否具备访问权限。因为某些Web服务器上保存着重要的信息，只想发给特定用户通信的权限；</li>
+<li>无法判定请求是来自何方、出自谁手；</li>
+<li>即使是无意义的请求也会照单全收，无法阻止海量请求下的DoS攻击；</li>
+</ul>
+</blockquote>
+<h3 id="3-无法证明报文完整性，可能已遭篡改"><a href="#3-无法证明报文完整性，可能已遭篡改" class="headerlink" title="(3) 无法证明报文完整性，可能已遭篡改"></a>(3) 无法证明报文完整性，可能已遭篡改</h3><p>&emsp;&emsp;<strong>所谓完整性是指信息的准确度</strong>。若无法证明其完整性，通常也就意味着无法判断信息是否准确。HTTP协议无法证明通信的报文完整性，在请求或响应送出之后直到对方接收之前的这段时间内，<strong>即使请求或响应的内容遭到篡改，也没有办法获悉。</strong><br>&emsp;&emsp;比如，从某个Web网站下载内容，是无法确定客户端下载的文件和服务器上存放的文件是否前后一致的。文件内容在传输途中可能已经被篡改为其他的内容。即使内容真的已改变，作为接收方的客户端也是觉察不到的。像这样，<strong>请求或响应在传输途中，遭攻击者拦截并篡改内容的攻击称为中间人攻击(Man-in-the-Middle attack，MITM)。</strong></p>
+<center><br><img src="http://occl9k36n.bkt.clouddn.com/2017_02_23_show_mitm.png" alt="中间人攻击示意图"><br></center>
+
+<h3 id="4-安全的HTTP版本应该具备的几个特征"><a href="#4-安全的HTTP版本应该具备的几个特征" class="headerlink" title="(4) 安全的HTTP版本应该具备的几个特征"></a>(4) 安全的HTTP版本应该具备的几个特征</h3><p>&emsp;&emsp;由于上述的几个问题，需要一种能够提供如下功能的HTTP安全技术：</p>
+<blockquote>
+<ul>
+<li>(1) 服务器认证(客户端知道它们是在与真正的而不是伪造的服务器通话)；</li>
+<li>(2) 客户端认证(服务器知道它们是在与真正的而不是伪造的客户端通话)；</li>
+<li>(3) 完整性(客户端和服务器的数据不会被修改)；</li>
+<li>(4) 加密(客户端和服务器的对话是私密的，无需担心被窃听)；</li>
+<li>(5) 效率(一个运行的足够快的算法，以便低端的客户端和服务器使用)；</li>
+<li>(6) 普适性(基本上所有的客户端和服务器都支持这些协议)；</li>
+</ul>
+</blockquote>
+<hr>
+<h2 id="2-HTTPS的关键技术"><a href="#2-HTTPS的关键技术" class="headerlink" title="2.HTTPS的关键技术"></a>2.HTTPS的关键技术</h2><p>&emsp;&emsp;在这样的需求背景下，HTTPS技术诞生了。HTTPS协议的主要功能基本都依赖于TLS/SSL协议，<strong>提供了身份验证、信息加密和完整性校验的功能，可以解决HTTP存在的安全问题</strong>。本节就重点探讨一下HTTPS协议的几个关键技术点。</p>
+<center><br><img src="http://occl9k36n.bkt.clouddn.com/2017_02_23_https_overview.png" alt="https概览"><br></center>
+
+<h3 id="1-加密技术"><a href="#1-加密技术" class="headerlink" title="(1) 加密技术"></a>(1) 加密技术</h3><p>加密算法一般分为两种：</p>
+<blockquote>
+<ul>
+<li><strong>对称加密：加密与解密的密钥相同。以DES算法为代表；</strong></li>
+<li><strong>非对称加密：加密与解密的密钥不相同。以RSA算法为代表；</strong></li>
+</ul>
+</blockquote>
+<p>&emsp;&emsp;对称加密强度非常高，一般破解不了，但存在一个很大的问题就是<strong>无法安全地生成和保管密钥</strong>，假如客户端和服务器之间每次会话都使用固定的、相同的密钥加密和解密，肯定存在很大的安全隐患。<br>&emsp;&emsp;<strong>在非对称密钥交换算法出现以前，对称加密一个很大的问题就是不知道如何安全生成和保管密钥。非对称密钥交换过程主要就是为了解决这个问题，使密钥的生成和使用更加安全。但同时也是HTTPS性能和速度严重降低的“罪魁祸首”。</strong><br>&emsp;&emsp;<strong>HTTPS采用对称加密和非对称加密两者并用的混合加密机制，在交换密钥环节使用非对称加密方式，之后的建立通信交换报文阶段则使用对称加密方式。</strong></p>
+<h3 id="2-身份验证–证明公开密钥正确性的证书"><a href="#2-身份验证–证明公开密钥正确性的证书" class="headerlink" title="(2) 身份验证–证明公开密钥正确性的证书"></a>(2) 身份验证–证明公开密钥正确性的证书</h3><p>&emsp;&emsp;<strong>非对称加密最大的一个问题，就是无法证明公钥本身就是货真价实的公钥</strong>。比如，正准备和某台服务器建立公开密钥加密方式下的通信时，如何证明收到的公开密钥就是原本预想的那台服务器发行的公开密钥。或许在公开密钥传输途中，真正的公开密钥已经被攻击者替换掉了。<br>&emsp;&emsp;如果不验证公钥的可靠性，至少会存在如下的两个问题：中间人攻击和信息抵赖。</p>
+<center><br><img src="http://occl9k36n.bkt.clouddn.com/2017_02_27_https_gonyue_yanzheng.png" alt="https概览"><br></center>
+
+<p>&emsp;&emsp;为了解决上述问题，可以使用由<strong>数字证书认证机构(CA，Certificate Authority)和其相关机关颁发的公开密钥证书</strong>。</p>
+<center><br><img src="http://occl9k36n.bkt.clouddn.com/2017_02_27_https_ca_use.png" alt="https概览"><br></center>
+
+<p>CA使用具体的流程如下：</p>
+<blockquote>
+<ul>
+<li>(1) 服务器的运营人员向数字证书认证机构(CA)提出公开密钥的申请;</li>
+<li>(2) CA通过线上、线下等多种手段<strong>验证申请者提供信息的真实性</strong>，如组织是否存在、企业是否合法，是否拥有域名的所有权等；</li>
+<li>(3) 如果信息审核通过，CA会<strong>对已申请的公开密钥做数字签名</strong>，然后分配这个已签名的公开密钥，并将该公开密钥放入公钥证书后绑定在一起。<br>证书包含以下信息：申请者公钥、申请者的组织信息和个人信息、签发机构CA的信息、有效时间、证书序列号等信息的明文，同时包含一个签名；<br>签名的产生算法：首先，使用散列函数计算公开的明文信息的信息摘要，然后，采用CA的私钥对信息摘要进行加密，密文即签名；</li>
+<li>(4) 客户端在HTTPS握手阶段向服务器发出请求，<strong>要求服务器返回证书文件</strong>；</li>
+<li>(5) <strong>客户端读取证书中的相关的明文信息，采用相同的散列函数计算得到信息摘要，然后，利用对应CA的公钥解密签名数据，对比证书的信息摘要，如果一致，则可以确认证书的合法性，即公钥合法</strong>；</li>
+<li>(6) 客户端然后验证证书相关的域名信息、有效时间等信息；</li>
+<li>(7) 客户端会内置信任CA的证书信息(包含公钥)，如果CA不被信任，则找不到对应CA的证书，证书也会被判定非法。</li>
+</ul>
+</blockquote>
+<p>在这个过程注意几点：</p>
+<blockquote>
+<ul>
+<li>(1) 申请证书不需要提供私钥，<strong>确保私钥永远只能被服务器掌握</strong>；</li>
+<li>(2) 证书的合法性仍然依赖于非对称加密算法，证书主要是增加了服务器信息以及签名；</li>
+<li>(3) 内置CA对应的证书称为<strong>根证书</strong>；颁发者和使用者相同，自己为自己签名，叫<strong>自签名证书</strong>；</li>
+<li>(4) <strong>证书=公钥+申请者与颁发者信息+签名；</strong></li>
+</ul>
+</blockquote>
+<hr>
+<h2 id="3-HTTPS协议原理"><a href="#3-HTTPS协议原理" class="headerlink" title="3.HTTPS协议原理"></a>3.HTTPS协议原理</h2><h3 id="1-HTTPS的历史"><a href="#1-HTTPS的历史" class="headerlink" title="(1) HTTPS的历史"></a>(1) HTTPS的历史</h3><p>HTTPS协议历史简介：</p>
+<blockquote>
+<ul>
+<li>(1) SSL协议的第一个版本由Netscape公司开发，但这个版本从未发布过；</li>
+<li>(2) SSL协议第二版于1994年11月发布。第一次部署是在Netscape Navigator1.1浏览器上，发行于1995年3月；</li>
+<li>(3) SSL 3于1995年年底发布，虽然名称与早先的协议版本相同，但<strong>SSL3是完全重新设计的协议，该设计一直沿用到今天</strong>。</li>
+<li>(4) TLS 1.0于1999年1月问世，与SSL 3相比，版本修改并不大；</li>
+<li>(5) 2006年4月，下一个版本TLS 1.1才问世，仅仅修复了一些关键的安全问题；</li>
+<li>(6) 2008年8月，TLS1.2发布。该版本添加了对已验证加密的支持，并且基本上删除了协议说明中所有硬编码的安全基元，使协议完全弹性化；</li>
+</ul>
+</blockquote>
+<h3 id="2-协议实现"><a href="#2-协议实现" class="headerlink" title="(2) 协议实现"></a>(2) 协议实现</h3><p>&emsp;&emsp;宏观上，TLS以记录协议(record protocol)实现。<strong>记录协议负责在传输连接上交换所有的底层消息，并可以配置加密</strong>。每一条TLS记录以一个短标头起始。标头包含记录内容的类型(或子协议)、协议版本和长度。消息数据紧跟在标头之后，如下图所示：</p>
+<center><br><img src="http://occl9k36n.bkt.clouddn.com/2017_02_28_record_protocol.png" alt="记录协议"><br></center>
+
+<p>&emsp;&emsp;TLS的主规格说明书定义了四个核心子协议：</p>
+<blockquote>
+<ul>
+<li>握手协议(handshake protocol)；</li>
+<li>密钥规格变更协议(change cipher spec protocol)；</li>
+<li>应用数据协议(application data protocol)；</li>
+<li>警报协议(alert protocol)；</li>
+</ul>
+</blockquote>
+<h3 id="3-握手协议"><a href="#3-握手协议" class="headerlink" title="(3) 握手协议"></a>(3) 握手协议</h3><p>&emsp;&emsp;握手是TLS协议中最精密复杂的部分。在这个过程中，通信双方协商连接参数，并且完成身份验证。根据使用的功能的不同，整个过程通常需要交换6~10条消息。根据配置和支持的协议扩展的不同，交换过程可能有许多变种。在使用中经常可以观察到以下三种流程：</p>
+<blockquote>
+<ul>
+<li>(1) 完整的握手，对服务器进行身份验证(单向验证，最常见)；</li>
+<li>(2) 对客户端和服务器都进行身份验证的握手(双向验证)；</li>
+<li>(3) 恢复之前的会话采用的简短握手；</li>
+</ul>
+</blockquote>
+<h3 id="4-单向验证的握手流程"><a href="#4-单向验证的握手流程" class="headerlink" title="(4) 单向验证的握手流程"></a>(4) 单向验证的握手流程</h3><p>&emsp;&emsp;本节以QQ邮箱的登录过程为例，通过抓包来对单向验证的握手流程进行分析。单向验证的一次完整的握手流程如下所示：</p>
+<center><br><img src="http://occl9k36n.bkt.clouddn.com/2017_02_28_handshake_protocol.png" alt="单向验证握手协议"><br></center>
+
+<p>主要分为四个步骤：</p>
+<blockquote>
+<ul>
+<li>(1) 交换各自支持的功能，对需要的连接参数达成一致;</li>
+<li>(2) 验证出示的证书，或使用其他方式进行身份验证;</li>
+<li>(3) 对将用于保护会话的共享主密钥达成一致;</li>
+<li>(4) 验证握手消息是否被第三方团体修改;</li>
+</ul>
+</blockquote>
+<p>下面对这一过程进行详细的分析。</p>
+<h4 id="1-ClientHello"><a href="#1-ClientHello" class="headerlink" title="1.ClientHello"></a>1.ClientHello</h4><p>&emsp;&emsp;在握手流程中，ClientHello是第一条消息。这条消息将客户端的功能和首选项传送给服务器。包含客户端支持的SSL的指定版本、加密组件(Cipher Suite)列表(所使用的加密算法及密钥长度等)。</p>
+<center><br><img src="http://occl9k36n.bkt.clouddn.com/2017_04_21_client_hello.png" alt="ClientHello报文"><br></center>
+
+<h4 id="2-ServerHello"><a href="#2-ServerHello" class="headerlink" title="2.ServerHello"></a>2.ServerHello</h4><p>&emsp;&emsp;ServerHello消息将服务器选择的连接参数传送回客户端。这个消息的结构与ClientHello类似，只是每个字段只包含一个选项。<strong>服务器的加密组件内容以及压缩方法等都是从接收到的客户端加密组件内筛选出来的。</strong></p>
+<center><br><img src="http://occl9k36n.bkt.clouddn.com/2017_04_21_server_hello.png" alt="ServerHello报文"><br></center>
+
+<h4 id="3-Certificate"><a href="#3-Certificate" class="headerlink" title="3.Certificate"></a>3.Certificate</h4><p>&emsp;&emsp; 之后服务器发送Certificate报文，报文中包含公开密钥证书，服务器必须保证它发送的证书与选择的算法套件一致。不过Certificate消息是可选的，因为并非所有套件都使用身份验证，也并非所有身份验证方法都需要证书。</p>
+<center><br><img src="http://occl9k36n.bkt.clouddn.com/2017_04_21_certificate.png" alt="Certificate报文"><br></center>
+
+<h4 id="4-ServerKeyExchange"><a href="#4-ServerKeyExchange" class="headerlink" title="4.ServerKeyExchange"></a>4.ServerKeyExchange</h4><p>&emsp;&emsp;ServerKeyExchange消息的目的是携带密钥交换的额外数据。消息内容对于不同的协商算法套件都会存在差异。在某些场景中，服务器不需要发送任何内容，在这些场景中就不需要发送ServerKeyExchange消息。</p>
+<center><br><img src="http://occl9k36n.bkt.clouddn.com/2017_04_21_server_key_exchange.png" alt="ServerKeyExchange报文"><br></center>
+
+<h4 id="5-ServerHelloDone"><a href="#5-ServerHelloDone" class="headerlink" title="5.ServerHelloDone"></a>5.ServerHelloDone</h4><p>&emsp;&emsp;ServerHelloDone消息表明服务器已经将所有预计的握手消息发送完毕。在此之后，服务器会等待客户端发送消息。</p>
+<center><br><img src="http://occl9k36n.bkt.clouddn.com/2017_04_21_server_hello_done.png" alt="ServerHelloDone报文"><br></center>
+
+<h4 id="6-ClientKeyExchange"><a href="#6-ClientKeyExchange" class="headerlink" title="6.ClientKeyExchange"></a>6.ClientKeyExchange</h4><p>&emsp;&emsp;ClientKeyExchange消息携带客户端为密钥交换提供的所有信息。这个消息受协商的密码套件的影响，内容随着不同的协商密码套件而不同。</p>
+<center><br><img src="http://occl9k36n.bkt.clouddn.com/2017_04_21_client_key_exchange.png" alt="ClientKeyExchange报文"><br></center>
+
+<h4 id="7-ChangeCipherSpec"><a href="#7-ChangeCipherSpec" class="headerlink" title="7.ChangeCipherSpec"></a>7.ChangeCipherSpec</h4><p>&emsp;&emsp;<strong>ChangeCipherSpec消息表明发送端已取得用以生成连接参数的足够信息，已生成加密密钥，并且将切换到加密模式</strong>。客户端和服务器在条件成熟时都会发送这个消息。注意：ChangeCipherSpec不属于握手消息，它是另一种协议，只有一条消息，作为它的子协议进行实现。</p>
+<center><br><img src="http://occl9k36n.bkt.clouddn.com/2017_04_21_change_cipher_spec.png" alt="ChangeCipherSpec报文"><br></center>
+
+<h4 id="8-Finished"><a href="#8-Finished" class="headerlink" title="8.Finished"></a>8.Finished</h4><p>&emsp;&emsp;Finished消息意味着握手已经完成。消息内容将加密，以便双方可以安全地交换验证整个握手完整性所需的数据。客户端和服务器在条件成熟时都会发送这个消息。</p>
+<h3 id="5-双向验证的握手流程"><a href="#5-双向验证的握手流程" class="headerlink" title="(5) 双向验证的握手流程"></a>(5) 双向验证的握手流程</h3><p>&emsp;&emsp;在一些对安全性要求更高的场景下，可能会出现双向验证的需求。完整的双向验证流程如下：</p>
+<center><br><img src="http://occl9k36n.bkt.clouddn.com/2017_04_21_both_verify.png" alt="双向验证的握手流程"><br></center>
+
+<p>&emsp;&emsp;可以看到，<strong>同单向验证流程相比，双向验证多了如下两条消息：CertificateRequest与CertificateVerify，其余流程大致相同。</strong></p>
+<h4 id="1-Certificate-Request"><a href="#1-Certificate-Request" class="headerlink" title="1.Certificate Request"></a>1.Certificate Request</h4><p>&emsp;&emsp;Certificate Request是TLS规定的一个可选功能，<strong>用于服务器认证客户端的身份</strong>。通过服务器要求客户端发送一个证书实现，服务器应该在ServerKeyExchange之后立即发送CertificateRequest消息。</p>
+<p>&emsp;&emsp;消息结构如下：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"><span class="keyword">enum</span> &#123;</div><div class="line">    rsa_sign(<span class="number">1</span>), dss_sign(<span class="number">2</span>), rsa_fixed_dh(<span class="number">3</span>),dss_fixed_dh(<span class="number">4</span>),</div><div class="line">    rsa_ephemeral_dh_RESERVED(<span class="number">5</span>),dss_ephemeral_dh_RESERVED(<span class="number">6</span>),</div><div class="line">    fortezza_dms_RESERVED(<span class="number">20</span>),</div><div class="line">    ecdsa_sign(<span class="number">64</span>), rsa_fixed_ecdh(<span class="number">65</span>),</div><div class="line">    ecdsa_fixed_ecdh(<span class="number">66</span>), </div><div class="line">    (<span class="number">255</span>)</div><div class="line">&#125; ClientCertificateType;</div><div class="line"></div><div class="line">opaque DistinguishedName&lt;<span class="number">1</span>..<span class="number">2</span>^<span class="number">16</span>-<span class="number">1</span>&gt;;struct &#123;</div><div class="line">    ClientCertificateType certificate_types&lt;<span class="number">1</span>..<span class="number">2</span>^<span class="number">8</span>-<span class="number">1</span>&gt;;</div><div class="line">    SignatureAndHashAlgorithm</div><div class="line">      supported_signature_algorithms&lt;<span class="number">2</span>^<span class="number">16</span>-<span class="number">1</span>&gt;;</div><div class="line">    DistinguishedName certificate_authorities&lt;<span class="number">0</span>..<span class="number">2</span>^<span class="number">16</span>-<span class="number">1</span>&gt;;</div><div class="line">&#125; CertificateRequest;</div></pre></td></tr></table></figure>
+<p>&emsp;&emsp;可以选择发送一份自己接受的证书颁发机构列表，这些机构都用其可分辨名称来表示.</p>
+<h4 id="2-CertificateVerify"><a href="#2-CertificateVerify" class="headerlink" title="2.CertificateVerify"></a>2.CertificateVerify</h4><p>&emsp;&emsp;当需要做客户端认证时，<strong>客户端发送CertificateVerify消息，来证明自己确实拥有客户端证书的私钥</strong>。这条消息仅仅在客户端证书有签名能力的情况下发送。CertificateVerify必须紧跟在ClientKeyExchange之后。消息结构如下：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line">struct &#123; </div><div class="line">Signature handshake_messages_signature; </div><div class="line">&#125; CertificateVerify;</div></pre></td></tr></table></figure>
+<h3 id="6-应用数据协议-application-data-protocol"><a href="#6-应用数据协议-application-data-protocol" class="headerlink" title="(6) 应用数据协议(application data protocol)"></a>(6) 应用数据协议(application data protocol)</h3><p>&emsp;&emsp;应用数据协议携带着应用消息，只以TLS的角度考虑的话，这些就是数据缓冲区。记录层使用当前连接安全参数对这些消息进行打包、碎片整理和加密。如下图所示，可以看到传输的数据已经是经过加密之后的了。</p>
+<center><br><img src="http://occl9k36n.bkt.clouddn.com/2017_05_05_application_data_protocol.png" alt="应用数据协议报文"><br></center>
+
+<h3 id="7-警报协议-alert-protocol"><a href="#7-警报协议-alert-protocol" class="headerlink" title="(7) 警报协议(alert protocol)"></a>(7) 警报协议(alert protocol)</h3><p>&emsp;&emsp;警报的目的是以简单的通知机制告知对端通信出现异常状况。它通常会携带close_notify异常，在连接关闭时使用，报告错误。警报非常简单，只有两个字段：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line">struct &#123; </div><div class="line">    AlertLevel level; </div><div class="line">    AlertDescription description; </div><div class="line">&#125; Alert;</div></pre></td></tr></table></figure>
+<blockquote>
+<ul>
+<li>AlertLevel字段：表示警报的严重程度；</li>
+<li>AlertDescription：直接表示警报代码；</li>
+</ul>
+</blockquote>
+<hr>
+<h2 id="4-在Android中使用HTTPS的常见问题"><a href="#4-在Android中使用HTTPS的常见问题" class="headerlink" title="4.在Android中使用HTTPS的常见问题"></a>4.在Android中使用HTTPS的常见问题</h2><h3 id="1-服务器证书验证错误"><a href="#1-服务器证书验证错误" class="headerlink" title="(1) 服务器证书验证错误"></a>(1) 服务器证书验证错误</h3><p>&emsp;&emsp;这是最常见的一种问题，通常会抛出如下类型的异常：</p>
+<center><br><img src="http://occl9k36n.bkt.clouddn.com/2017_05_05_certificate_wrong.png" alt="服务器证书验证错误"><br></center>
+
+<p>出现此类错误通常可能由以下的三种原因导致：</p>
+<blockquote>
+<ul>
+<li>(1) 颁发服务器证书的CA未知；</li>
+<li>(2) 服务器证书不是由CA签署的，而是自签署(比较常见)；</li>
+<li>(3) 服务器配置缺少中间 CA；</li>
+</ul>
+</blockquote>
+<p>&emsp;&emsp;<strong>当服务器的CA不被系统信任时，就会发生 SSLHandshakeException。</strong>可能是购买的CA证书比较新，Android系统还未信任，也可能是<strong>服务器使用的是自签名证书(这个在测试阶段经常遇到)</strong>。<br>&emsp;&emsp;解决此类问题常见的做法是：指定HttpsURLConnection信任特定的CA集合。在本文的第5部分代码实现模块，会详细的讲解如何让Android应用信任自签名证书集合或者跳过证书校验的环节。 </p>
+<h3 id="2-域名验证失败"><a href="#2-域名验证失败" class="headerlink" title="(2) 域名验证失败"></a>(2) 域名验证失败</h3><p>&emsp;&emsp;SSL连接有两个关键环节。首先是验证证书是否来自值得信任的来源，其次确保正在通信的服务器提供正确的证书。如果没有提供，通常会看到类似于下面的错误：</p>
+<center><br><img src="http://occl9k36n.bkt.clouddn.com/2017_05_05_domain_wrong.png" alt="域名验证错误"><br></center>
+
+<p>&emsp;&emsp;出现此类问题的原因通常是由于服务器证书中配置的域名和客户端请求的域名不一致所导致的。</p>
+<p>有两种解决方案：</p>
+<blockquote>
+<ul>
+<li>(1) 重新生成服务器的证书，用真实的域名信息;</li>
+<li>(2) 自定义HostnameVerifier,在握手期间，如果URL的主机名和服务器的标识主机名不匹配，则验证机制可以回调此接口的实现程序来确定是否应该允许此连接。可以通过自定义HostnameVerifier实现一个白名单的功能。</li>
+</ul>
+</blockquote>
+<p>代码如下：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"></div><div class="line">HostnameVerifier DO_NOT_VERIFY = <span class="keyword">new</span> HostnameVerifier() &#123;</div><div class="line">  <span class="meta">@Override</span></div><div class="line">  <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">verify</span><span class="params">(String hostname, SSLSession session)</span> </span>&#123;</div><div class="line">    <span class="comment">// 设置接受的域名集合</span></div><div class="line">    <span class="keyword">if</span> (hostname.equals(...))  &#123;</div><div class="line">         <span class="keyword">return</span> <span class="keyword">true</span>;</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;;</div><div class="line"></div><div class="line">HttpsURLConnection.setDefaultHostnameVerifier(DO_NOT_VERIFY);</div></pre></td></tr></table></figure>
+<h3 id="3-客户端证书验证"><a href="#3-客户端证书验证" class="headerlink" title="(3) 客户端证书验证"></a>(3) 客户端证书验证</h3><p>&emsp;&emsp;SSL支持服务端通过验证客户端的证书来确认客户端的身份。这种技术与TrustManager的特性相似。本文将在第5部分代码实现模块，讲解如何让Android应用支持客户端证书验证的方式。 </p>
+<h3 id="4-Android上TLS版本兼容问题"><a href="#4-Android上TLS版本兼容问题" class="headerlink" title="(4) Android上TLS版本兼容问题"></a>(4) Android上TLS版本兼容问题</h3><p>&emsp;&emsp;之前在接口联调的过程中，测试那边反馈过一个问题是在Android 4.4以下的系统出现HTTPS请求不成功而在4.4以上的系统上却正常的问题。相应的错误如下：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"><span class="number">03</span>-<span class="number">09</span> <span class="number">09</span>:<span class="number">21</span>:<span class="number">38.427</span>: W/System.err(<span class="number">2496</span>): javax.net.ssl.SSLHandshakeException: javax.net.ssl.SSLProtocolException: SSL handshake aborted: ssl=<span class="number">0xb7fa0620</span>: Failure in SSL library, usually a protocol error</div><div class="line"></div><div class="line"><span class="number">03</span>-<span class="number">09</span> <span class="number">09</span>:<span class="number">21</span>:<span class="number">38.427</span>: W/System.err(<span class="number">2496</span>): error:<span class="number">14077410</span>:SSL routines:SSL23_GET_SERVER_HELLO:<span class="function">sslv3 alert handshake <span class="title">failure</span> <span class="params">(external/openssl/ssl/s23_clnt.c:<span class="number">741</span> <span class="number">0xa90e6990</span>:<span class="number">0x00000000</span>)</span></span></div></pre></td></tr></table></figure>
+<p>&emsp;&emsp;按照官方文档的描述，Android系统对SSL协议的版本支持如下：</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th style="text-align:center">Supported (API Levels)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Default</td>
+<td style="text-align:center">10+</td>
+</tr>
+<tr>
+<td>SSL</td>
+<td style="text-align:center">10–TBD</td>
+</tr>
+<tr>
+<td>SSLv3</td>
+<td style="text-align:center">10–TBD</td>
+</tr>
+<tr>
+<td>TLS</td>
+<td style="text-align:center">1+</td>
+</tr>
+<tr>
+<td>TLSv1</td>
+<td style="text-align:center">10+</td>
+</tr>
+<tr>
+<td>TLSv1.1</td>
+<td style="text-align:center">16+</td>
+</tr>
+<tr>
+<td>TLSv1.2</td>
+<td style="text-align:center">16+</td>
+</tr>
+</tbody>
+</table>
+<p>&emsp;&emsp;也就是说，<strong>按官方的文档显示，在API 16+以上，TLS1.1和TLS1.2是默认开启的。但是实际上在API 20+以上才默认开启，4.4以下的版本是无法使用TLS1.1和TLS 1.2的，这也是Android系统的一个bug。</strong></p>
+<p>&emsp;&emsp;参照stackoverflow上的一些方式，比较好的一种解决方案如下：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line">SSLSocketFactory noSSLv3Factory;</div><div class="line"><span class="keyword">if</span> (Build.VERSION.SDK_INT &lt;= Build.VERSION_CODES.KITKAT) &#123;</div><div class="line">    noSSLv3Factory = <span class="keyword">new</span> TLSSocketFactory(mSSLContext.getSSLSocket().getSocketFactory());</div><div class="line">&#125; <span class="keyword">else</span> &#123;</div><div class="line">    noSSLv3Factory = mSSLContext.getSSLSocket().getSocketFactory();</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>对于4.4以下的系统，使用自定义的TLSSocketFactory，开启对TLS1.1和TLS1.2的支持，核心代码：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">TLSSocketFactory</span> <span class="keyword">extends</span> <span class="title">SSLSocketFactory</span> </span>&#123;</div><div class="line"></div><div class="line">	<span class="keyword">private</span> SSLSocketFactory internalSSLSocketFactory;</div><div class="line"></div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="title">TLSSocketFactory</span><span class="params">()</span> <span class="keyword">throws</span> KeyManagementException, NoSuchAlgorithmException </span>&#123;</div><div class="line">		SSLContext context = SSLContext.getInstance(<span class="string">"TLS"</span>);</div><div class="line">		context.init(<span class="keyword">null</span>, <span class="keyword">null</span>, <span class="keyword">null</span>);</div><div class="line">		internalSSLSocketFactory = context.getSocketFactory();</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="title">TLSSocketFactory</span><span class="params">(SSLSocketFactory delegate)</span> <span class="keyword">throws</span> KeyManagementException, NoSuchAlgorithmException </span>&#123;</div><div class="line">		internalSSLSocketFactory = delegate;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">    ......</div><div class="line">    </div><div class="line">    <span class="meta">@Override</span></div><div class="line">	<span class="function"><span class="keyword">public</span> Socket <span class="title">createSocket</span><span class="params">(InetAddress address, <span class="keyword">int</span> port, InetAddress localAddress, <span class="keyword">int</span> localPort)</span> <span class="keyword">throws</span> IOException </span>&#123;</div><div class="line">		<span class="keyword">return</span> enableTLSOnSocket(internalSSLSocketFactory.createSocket(address, port, localAddress, localPort));</div><div class="line">	&#125;</div><div class="line"></div><div class="line">    <span class="comment">// 开启对TLS1.1和TLS1.2的支持</span></div><div class="line">	<span class="function"><span class="keyword">private</span> Socket <span class="title">enableTLSOnSocket</span><span class="params">(Socket socket)</span> </span>&#123;</div><div class="line">		<span class="keyword">if</span>(socket != <span class="keyword">null</span> &amp;&amp; (socket <span class="keyword">instanceof</span> SSLSocket)) &#123;</div><div class="line">			((SSLSocket)socket).setEnabledProtocols(<span class="keyword">new</span> String[] &#123;<span class="string">"TLSv1.1"</span>, <span class="string">"TLSv1.2"</span>&#125;);</div><div class="line">		&#125;</div><div class="line">		<span class="keyword">return</span> socket;</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>TLSSocketFactory的完整代码见附件中的代码压缩包。</p>
+<hr>
+<h2 id="5-代码实现"><a href="#5-代码实现" class="headerlink" title="5.代码实现"></a>5.代码实现</h2><p>&emsp;&emsp;本部分主要基于第四部分提出的Android应用中使用HTTPS遇到的一些常见的问题，给出一个比较系统的解决方案。完整代码见附件中的代码压缩包。</p>
+<h3 id="1-整体结构"><a href="#1-整体结构" class="headerlink" title="(1) 整体结构"></a>(1) 整体结构</h3><p>&emsp;&emsp;不管是使用自签名证书，还是采取客户端身份验证，核心都是创建一个自己的KeyStore,然后使用这个KeyStore创建一个自定义的SSLContext。整体类图如下：</p>
+<center><br><img src="http://occl9k36n.bkt.clouddn.com/2017_05_05_https_uml.png" alt="https uml"><br></center>
+
+<p>类图中的MySSLContext可以应用在HTTPUrlConnection的方式与服务端连接的过程中:</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"><span class="keyword">if</span> (JarConfig.__self_signed_https) &#123;</div><div class="line">    SSLContextByTrustAll mSSLContextByTrustAll = <span class="keyword">new</span> SSLContextByTrustAll();</div><div class="line">    MySSLContext mSSLContext = <span class="keyword">new</span> MySSLContext(mSSLContextByTrustAll);</div><div class="line">   SSLSocketFactory noSSLv3Factory;</div><div class="line">   <span class="keyword">if</span> (Build.VERSION.SDK_INT &lt;= Build.VERSION_CODES.KITKAT) &#123;</div><div class="line">        noSSLv3Factory = <span class="keyword">new</span> TLSSocketFactory(mSSLContext.getSSLSocket().getSocketFactory());</div><div class="line">    &#125; <span class="keyword">else</span> &#123;</div><div class="line">        noSSLv3Factory = mSSLContext.getSSLSocket().getSocketFactory();</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    httpsURLConnection.setSSLSocketFactory(noSSLv3Factory);</div><div class="line">    httpsURLConnection.setHostnameVerifier(MY_DOMAIN_VERIFY);</div><div class="line">&#125;<span class="keyword">else</span> &#123;</div><div class="line">    httpsURLConnection.setSSLSocketFactory((SSLSocketFactory) SSLSocketFactory.getDefault());</div><div class="line">    httpsURLConnection.setHostnameVerifier(DO_NOT_VERIFY);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>&emsp;&emsp;核心是通过httpsURLConnection.setSSLSocketFactory使用自定义的校验逻辑。整体设计上使用策略模式决定采用哪种验证机制：</p>
+<blockquote>
+<ul>
+<li>makeContextWithCilentAndServer 单向验证方式(自定义信任的证书集合)</li>
+<li>makeContextWithServer 双向验证方式(自定义信任的证书集合，并使用客户端证书)</li>
+<li>makeContextToTrustAll (<strong>信任所有的CA证书，不安全，仅供测试阶段使用</strong>)</li>
+</ul>
+</blockquote>
+<h3 id="2-单向验证并自定义信任的证书集合"><a href="#2-单向验证并自定义信任的证书集合" class="headerlink" title="(2) 单向验证并自定义信任的证书集合"></a>(2) 单向验证并自定义信任的证书集合</h3><p>&emsp;&emsp;在App中，把服务端证书放到资源文件下(<strong>通常是asset目录下</strong>，因为证书对于每一个用户来说都是相同的，并且也不会经常发生改变)，但是也可以放在设备的外部存储上。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">SSLContextWithServer</span> <span class="keyword">implements</span> <span class="title">GetSSLSocket</span> </span>&#123;</div><div class="line"></div><div class="line">    <span class="comment">// 在这里进行服务器正式的名称的配置</span></div><div class="line">    <span class="keyword">private</span> String[] serverCertificateNames = &#123;<span class="string">"serverCertificateNames1"</span> ,<span class="string">"serverCertificateNames2"</span>&#125;;</div><div class="line"></div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">public</span> SSLContext <span class="title">getSSLSocket</span><span class="params">()</span> </span>&#123;</div><div class="line">        String[] caCertString = <span class="keyword">new</span> String[serverCertificateNames.length];</div><div class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">0</span> ; i &lt; serverCertificateNames.length ; i++) &#123;</div><div class="line">            <span class="keyword">try</span> &#123;</div><div class="line">                caCertString[i] = readCaCert(serverCertificateNames[i]);</div><div class="line">            &#125; <span class="keyword">catch</span>(Exception e) &#123;</div><div class="line"></div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">        SSLContext mSSLContext = <span class="keyword">null</span>;</div><div class="line">        <span class="keyword">try</span> &#123;</div><div class="line">            mSSLContext = SSLContextFactory.getInstance().makeContextWithServer(caCertString);</div><div class="line">        &#125; <span class="keyword">catch</span>(Exception e) &#123;</div><div class="line"></div><div class="line">        &#125;</div><div class="line">        <span class="keyword">return</span> mSSLContext;</div><div class="line">    &#125;</div></pre></td></tr></table></figure>
+<p>&emsp;&emsp;serverCertificateNames中定义了App所信任的证书名称(这些证书文件必须要放在指定的文件路径下，并其要保证名称相同)，而后就可以加载服务端证书链到keystore，通过获取到的可信任并带有服务端证书的keystore,就可以用它来初始化自定义的SSLContext了：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"><span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">checkServerTrusted</span><span class="params">(X509Certificate[] chain, String authType)</span> <span class="keyword">throws</span> CertificateException </span>&#123;</div><div class="line">        <span class="keyword">try</span> &#123;</div><div class="line">            originalX509TrustManager.checkServerTrusted(chain, authType);</div><div class="line">        &#125; <span class="keyword">catch</span>(CertificateException originalException) &#123;</div><div class="line">            <span class="keyword">try</span> &#123;</div><div class="line">                X509Certificate[] reorderedChain = reorderCertificateChain(chain);</div><div class="line">                CertPathValidator validator = CertPathValidator.getInstance(<span class="string">"PKIX"</span>);</div><div class="line">                CertificateFactory factory = CertificateFactory.getInstance(<span class="string">"X509"</span>);</div><div class="line">                CertPath certPath = factory.generateCertPath(Arrays.asList(reorderedChain));</div><div class="line">                PKIXParameters params = <span class="keyword">new</span> PKIXParameters(trustStore);</div><div class="line">                params.setRevocationEnabled(<span class="keyword">false</span>);</div><div class="line">                validator.validate(certPath, params);</div><div class="line">            &#125; <span class="keyword">catch</span>(Exception ex) &#123;</div><div class="line">                <span class="keyword">throw</span> originalException;</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div></pre></td></tr></table></figure>
+<h3 id="3-跳过证书校验过程"><a href="#3-跳过证书校验过程" class="headerlink" title="(3) 跳过证书校验过程"></a>(3) 跳过证书校验过程</h3><p>&emsp;&emsp;和上面的过程类似，只不过这里提供的TrustManager不需要提供信任的证书集合，默认接受任意客户端证书即可：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">AcceptAllTrustManager</span> <span class="keyword">implements</span> <span class="title">X509TrustManager</span> </span>&#123;</div><div class="line"></div><div class="line">	<span class="meta">@Override</span></div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">checkClientTrusted</span><span class="params">(X509Certificate[] chain, String authType)</span> <span class="keyword">throws</span> CertificateException </span>&#123;</div><div class="line">		<span class="comment">//do nothing，接受任意客户端证书</span></div><div class="line">	&#125;</div><div class="line"></div><div class="line">	<span class="meta">@Override</span></div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">checkServerTrusted</span><span class="params">(X509Certificate[] chain, String authType)</span> <span class="keyword">throws</span> CertificateException </span>&#123;</div><div class="line">		<span class="comment">//do nothing，接受任意服务端证书</span></div><div class="line">	&#125;</div><div class="line"></div><div class="line">	<span class="meta">@Override</span></div><div class="line">	<span class="keyword">public</span> X509Certificate[] getAcceptedIssuers() &#123;</div><div class="line">		<span class="keyword">return</span> <span class="keyword">null</span>;</div><div class="line">	&#125;</div></pre></td></tr></table></figure>
+<p>而后构造相应的SSLContext:</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> SSLContext <span class="title">makeContextToTrustAll</span><span class="params">()</span> <span class="keyword">throws</span> Exception </span>&#123;</div><div class="line">        AcceptAllTrustManager tm = <span class="keyword">new</span> AcceptAllTrustManager();</div><div class="line">        SSLContext sslContext = SSLContext.getInstance(<span class="string">"TLS"</span>);</div><div class="line">        sslContext.init(<span class="keyword">null</span>, <span class="keyword">new</span> TrustManager[] &#123; tm &#125;, <span class="keyword">null</span>);</div><div class="line"></div><div class="line">        <span class="keyword">return</span> sslContext;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>完整的代码以及双向验证相关的实现可以参见附件中的代码链接。</p>
+<hr>
+<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><p><a href="http://www.10tiao.com/html/182/201612/2247483961/1.html" target="_blank" rel="external">1. TLS协议分析(5) handshake协议 证书与密钥交换</a><br><a href="https://elliotsomething.github.io/2016/12/19/HTTPS%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3/" target="_blank" rel="external">2. HTTPS深入理解</a><br><a href="http://www.jianshu.com/p/67bcb140d804" target="_blank" rel="external">3. HTTPS原理介绍之内容加密</a><br><a href="http://km.oa.com/group/11879/articles/show/249476?kmref=search&amp;from_page=1&amp;no=1" target="_blank" rel="external">4. HTTPS原理探讨</a><br><a href="http://stackoverflow.com/questions/26649389/how-to-disable-sslv3-in-android-for-httpsurlconnection" target="_blank" rel="external">5. How to disable SSLv3 in android for HttpsUrlConnection?</a><br><a href="https://blog.dev-area.net/2015/08/13/android-4-1-enable-tls-1-1-and-tls-1-2/" target="_blank" rel="external">6. Android 4.1+ enable TLS 1.1 and TLS 1.2</a><br><a href="https://developer.android.com/training/articles/security-ssl.html#CommonHostnameProbs" target="_blank" rel="external">7. Google关于https的官方文档</a><br><a href="http://blog.csdn.net/hzl9966/article/details/52092551" target="_blank" rel="external">8. 使用HTTPS与SSL来保证安全性</a><br><a href="http://www.jianshu.com/p/7c1bc2daef8d" target="_blank" rel="external">9. Android App 安全的HTTPS 通信</a><br><a href="http://www.wxtlife.com/2016/03/27/%E8%AF%A6%E8%A7%A3https%E6%98%AF%E5%A6%82%E4%BD%95%E7%A1%AE%E4%BF%9D%E5%AE%89%E5%85%A8%E7%9A%84%EF%BC%9F/" target="_blank" rel="external">10. 详解https是如何确保安全的？</a><br><a href="https://book.douban.com/subject/25863515/" target="_blank" rel="external">11. 图解HTTP–第七章</a><br><a href="https://book.douban.com/subject/1440226/" target="_blank" rel="external">12. HTTP: The Definitive Guide</a><br><a href="https://book.douban.com/subject/26276786/" target="_blank" rel="external">13. Bulletproof SSL and TLS:<br>Understanding and Deploying SSL/TLS and PKI to Secure Servers and Web Applications</a></p>
+
+                <hr>
+                
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/2099/12/31/aaa-top-file/" data-toggle="tooltip" data-placement="top"
+                           title="逍遥游">&larr; Previous Post</a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/2017/02/16/inside-learn-butter-knife2/" data-toggle="tooltip" data-placement="top"
+                           title="ButterKnife的使用与原理(2)">Next Post &rarr;</a>
+                    </li>
+                    
+                </ul>
+
+                
+
+                
+
+            </div>
+
+            <div class="hidden-xs col-sm-3 toc-col">
+                <div class="toc-wrap">
+                    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-HTTP协议的不足"><span class="toc-text">1.HTTP协议的不足</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-通信使用明文可能会被窃听"><span class="toc-text">(1) 通信使用明文可能会被窃听</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-不验证通信方的身份可能遭遇伪装"><span class="toc-text">(2) 不验证通信方的身份可能遭遇伪装</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-无法证明报文完整性，可能已遭篡改"><span class="toc-text">(3) 无法证明报文完整性，可能已遭篡改</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-安全的HTTP版本应该具备的几个特征"><span class="toc-text">(4) 安全的HTTP版本应该具备的几个特征</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-HTTPS的关键技术"><span class="toc-text">2.HTTPS的关键技术</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-加密技术"><span class="toc-text">(1) 加密技术</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-身份验证–证明公开密钥正确性的证书"><span class="toc-text">(2) 身份验证–证明公开密钥正确性的证书</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-HTTPS协议原理"><span class="toc-text">3.HTTPS协议原理</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-HTTPS的历史"><span class="toc-text">(1) HTTPS的历史</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-协议实现"><span class="toc-text">(2) 协议实现</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-握手协议"><span class="toc-text">(3) 握手协议</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-单向验证的握手流程"><span class="toc-text">(4) 单向验证的握手流程</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-ClientHello"><span class="toc-text">1.ClientHello</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-ServerHello"><span class="toc-text">2.ServerHello</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-Certificate"><span class="toc-text">3.Certificate</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-ServerKeyExchange"><span class="toc-text">4.ServerKeyExchange</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#5-ServerHelloDone"><span class="toc-text">5.ServerHelloDone</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#6-ClientKeyExchange"><span class="toc-text">6.ClientKeyExchange</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#7-ChangeCipherSpec"><span class="toc-text">7.ChangeCipherSpec</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#8-Finished"><span class="toc-text">8.Finished</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-双向验证的握手流程"><span class="toc-text">(5) 双向验证的握手流程</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-Certificate-Request"><span class="toc-text">1.Certificate Request</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-CertificateVerify"><span class="toc-text">2.CertificateVerify</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-应用数据协议-application-data-protocol"><span class="toc-text">(6) 应用数据协议(application data protocol)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-警报协议-alert-protocol"><span class="toc-text">(7) 警报协议(alert protocol)</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-在Android中使用HTTPS的常见问题"><span class="toc-text">4.在Android中使用HTTPS的常见问题</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-服务器证书验证错误"><span class="toc-text">(1) 服务器证书验证错误</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-域名验证失败"><span class="toc-text">(2) 域名验证失败</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-客户端证书验证"><span class="toc-text">(3) 客户端证书验证</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-Android上TLS版本兼容问题"><span class="toc-text">(4) Android上TLS版本兼容问题</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-代码实现"><span class="toc-text">5.代码实现</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-整体结构"><span class="toc-text">(1) 整体结构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-单向验证并自定义信任的证书集合"><span class="toc-text">(2) 单向验证并自定义信任的证书集合</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-跳过证书校验过程"><span class="toc-text">(3) 跳过证书校验过程</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考文献"><span class="toc-text">参考文献</span></a></li></ol>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Sidebar Container -->
+
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <!-- no hr -->
+                    <h5 class="text-center">
+                        <a href="/tags/">FEATURED TAGS</a>
+                    </h5>
+                    <div class="tags">
+                        
+                    </div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <div style="margin-top: 20px;">
+                    <h5 class="text-center">FRIENDS</h5>
+                    <ul class="list-inline text-center">
+                        
+                        <li><a href="http://stormzhang.com/posts/">stormzhang博客</a></li>
+                        
+                        <li><a href="http://blog.csdn.net/sinyu890807/article/list/1">郭霖博客频道</a></li>
+                        
+                        <li><a href="http://blog.csdn.net/singwhatiwanna">任玉刚博客频道</a></li>
+                        
+                        <li><a href="http://blog.csdn.net/lmj623565791">张鸿洋博客频道</a></li>
+                        
+                    </ul>
+                </div>
+                
+            </div>
+        </div>
+
+    </div>
+</article>
+
+
+
+
+
+
+<!-- Footer -->
+<!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 text-center">
+                <br>
+                <ul class="list-inline text-center">
+                
+                
+                
+                    <li>
+                        <a target="_blank" href="https://www.zhihu.com/people/cao-feng-bin">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa  fa-stack-1x fa-inverse">知</i>
+                            </span>
+                        </a>
+                    </li>
+                
+
+                
+
+                
+
+                
+                    <li>
+                        <a target="_blank"  href="https://github.com/caofengbin">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                
+
+                
+
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; Caofengbin 2017
+                    <br>
+                    <span id="busuanzi_container_site_pv" style="font-size: 12px;">PV: <span id="busuanzi_value_site_pv"></span> Times</span>
+                    <br>
+                    Theme by <a href="https://haojen.github.io/">Haojen Ma</a>
+                </p>
+
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js"></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js"></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/blog.js"></script>
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async("http://haojen.github.io/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("//cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+<!-- Google Analytics -->
+
+
+
+<!-- Baidu Tongji -->
+
+
+<!-- swiftype -->
+<script type="text/javascript">
+  (function(w,d,t,u,n,s,e){w['SwiftypeObject']=n;w[n]=w[n]||function(){
+  (w[n].q=w[n].q||[]).push(arguments);};s=d.createElement(t);
+  e=d.getElementsByTagName(t)[0];s.async=1;s.src=u;e.parentNode.insertBefore(s,e);
+  })(window,document,'script','//s.swiftypecdn.com/install/v2/st.js','_st');
+
+  _st('install','null','2.0.0');
+</script>
+
+<script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<!--wechat title img-->
+<img class="wechat-title-img" src="http://occl9k36n.bkt.clouddn.com/my_head_image.jpg">
+</body>
+
+</html>
