@@ -22,7 +22,7 @@
         
     </title>
 
-    <link rel="canonical" href="http://haojen.github.io/archives/">
+    <link rel="canonical" href="http://haojen.github.io/page/2/">
 
     <!-- Bootstrap Core CSS -->
     <link rel="stylesheet" href="/css/bootstrap.min.css">
@@ -44,7 +44,7 @@
 <body ontouchstart="" class="animated fadeIn">
 <!-- Navigation -->
 <nav class="navbar navbar-default navbar-custom navbar-fixed-top " id="nav-top" data-ispost = "false" data-istags="false
-" data-ishome = "false" >
+" data-ishome = "true" >
     <div class="container-fluid">
         <!-- Brand and toggle get grouped for better mobile display -->
         <div class="navbar-header page-scroll">
@@ -117,6 +117,126 @@
 <!-- Main Content -->
 
 
+<style>
+
+    .custom-haojen-container .post-preview:nth-of-type(1),
+    .custom-haojen-container .post-preview-poetry:nth-of-type(1) {
+        text-align: center;
+        background-repeat: no-repeat;
+        border-radius: 3px;
+        background-size: cover;
+        padding: 0;
+        height: 300px;
+        display: table;
+        width: 100%;
+        background-color: rgba(0, 0, 0, 0.16);
+    }
+
+    /*去掉诗歌的背景图片*/
+    .custom-haojen-container .post-preview-poetry:nth-of-type(1) {
+        background-image: none !important;
+        background-color: rgba(255, 248, 220, 0.5);
+    }
+
+    .custom-haojen-container .post-preview:nth-child(1) h2,
+    .custom-haojen-container .post-preview:nth-child(1) .post-meta,
+    .custom-haojen-container .post-preview:nth-child(1) .post-subtitle {
+        text-shadow: 0 0 40px rgba(0, 0, 0, 1);
+        letter-spacing: 1px;
+        color: #fff;
+        margin-top: 0;
+        padding-left: 60px;
+        padding-right: 60px;
+    }
+
+    .custom-haojen-container .post-preview:nth-child(1) .post-meta {
+        font-size: .9em;
+        font-weight: 300;
+        margin-top: 0;
+    }
+
+    .custom-haojen-container .post-preview-poetry:nth-child(1) .post-subtitle {
+        letter-spacing: 6px;
+        font-size: 18px;
+        font-family: unset;
+        font-weight: 400;
+        color: rgba(0, 0, 0, .75)
+    }
+
+    /*不显示摘要*/
+    .custom-haojen-container .post-preview:nth-child(1) .post-content-preview {
+        display: none
+    }
+
+    /*只第一个显示背景图片*/
+    .custom-haojen-container .post-preview:not(:nth-child(1)) {
+        background-image: none !important;
+    }
+
+    /*第一个分界线去掉*/
+    .custom-haojen-container hr:nth-of-type(1) {
+        display: none;
+    }
+
+    /*主题*/
+    .custom-haojen-container .post-preview:nth-of-type(1) > a {
+        display: table-cell;
+        vertical-align: middle;
+    }
+
+    /*诗词标题*/
+    .custom-haojen-container .post-preview-poetry:nth-child(1) h2 {
+        font-size: 35px;
+        font-family: STKaiti;
+        color: rgba(0, 0, 0, .8);
+    }
+
+    .custom-haojen-container .post-preview-poetry:nth-of-type(1) .post-meta {
+        color: #0e2231;
+    }
+
+    @media (max-width: 768px) {
+        .custom-haojen-container .post-preview:nth-child(1) {
+            height: 240px;
+        }
+
+        .custom-haojen-container .post-preview-poetry:nth-child(1) h2 {
+            font-size: 28px !important;
+            margin-top: 0;
+        }
+
+        .custom-haojen-container .post-preview:nth-child(1) .post-subtitle {
+            font-size: 18px;
+            font-weight: 400;
+            padding-left: 0;
+            padding-right: 0;
+        }
+
+        .custom-haojen-container .post-preview:nth-of-type(1) > a {
+            padding: 20px
+        }
+    }
+
+    /*手机屏幕*/
+    @media (max-width: 400px) {
+        .custom-haojen-container .post-preview:nth-child(1) {
+            height: 195px;
+        }
+
+        .custom-haojen-container .post-preview-poetry:nth-child(1) h2 {
+            font-size: 20px !important;
+        }
+
+        .custom-haojen-container .post-preview:nth-child(1) .post-subtitle {
+            font-size: 16px;
+        }
+
+        .custom-haojen-container .post-preview:nth-child(1) a {
+            padding: 30px 20px;
+        }
+    }
+</style>
+
 <!-- Page Header -->
 <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 visible-xs-block visible-sm-block">
     <div class="row">
@@ -143,184 +263,23 @@
 
 
 
-<div class="post-preview post-preview-poetry"
-     style="background-image: url('')">
-    <a href="/2099/12/31/aaa-top-file/">
-        <h2 class="post-title">
-            逍遥游
-        </h2>
-        <p class="post-meta">
-            <i class="fa fa-calendar" aria-hidden="true"></i> 2099-12-31
-        </p>
-        
-        <div class="post-content-preview">
-            <p>
-                北冥有鱼，其名为鲲。鲲之大，不知其几千里也；化而为鸟，其名为鹏。鹏之大，不知几千里也；怒而飞，其翼若垂天之云。是鸟也，海运则将徙于南冥。南冥者，天池也。齐谐者，志怪者也。谐之言曰：「鹏之徙于南冥也，水击三千里，抟扶摇而上者九万里，去以六月息者也。」野马也，尘埃也，生物之以息相吹也。天之苍苍，其正..
-            </p>
-        </div>
-    </a>
-
-</div>
-
-<hr>
-
-
-
 <div class="post-preview "
      style="background-image: url('')">
-    <a href="/2018/03/16/dhcp-and-nat/">
+    <a href="/2016/12/23/summary-use-broadcast/">
         <h2 class="post-title">
-            长连接及心跳保活原理简介
+            Android中的广播使用小结
         </h2>
         <p class="post-meta">
-            <i class="fa fa-calendar" aria-hidden="true"></i> 2018-03-16
+            <i class="fa fa-calendar" aria-hidden="true"></i> 2016-12-23
         </p>
         
         <div class="post-content-preview">
             <p>
-                长连接及心跳保活原理简介&emsp;&emsp;本文简要的分析了长连接产生的背景以及所解决的问题，并对比了keep-alive与心跳机制对长连接保活的影响，最后详细的介绍了心跳保活的两个关键因素–DHCP协议与NAT原理。如有不当之处，欢迎批评和指正。
+                
+1.广播的分类(1)按照发送的方式分类
 
-1.短连接，并行连接，持久连接与长连接(..
-            </p>
-        </div>
-    </a>
-
-</div>
-
-<hr>
-
-
-
-<div class="post-preview "
-     style="background-image: url('')">
-    <a href="/2017/05/08/httpsAndroid/">
-        <h2 class="post-title">
-            HTTPS原理浅析及其在Android中的使用
-        </h2>
-        <p class="post-meta">
-            <i class="fa fa-calendar" aria-hidden="true"></i> 2017-05-08
-        </p>
-        
-        <div class="post-content-preview">
-            <p>
-                &emsp;&emsp;本文首先分析HTTP协议在安全性上的不足，进而阐述HTTPS实现安全通信的关键技术点和原理。然后通过抓包分析HTTPS协议的握手以及通信过程。最后总结一下自己在开发过程中遇到的HTTPS相关的问题，并给出当前项目中对HTTPS问题的系统解决方案，以供总结和分享。如有不当之..
-            </p>
-        </div>
-    </a>
-
-</div>
-
-<hr>
-
-
-
-<div class="post-preview "
-     style="background-image: url('')">
-    <a href="/2017/02/16/inside-learn-butter-knife2/">
-        <h2 class="post-title">
-            ButterKnife的使用与原理(2)
-        </h2>
-        <p class="post-meta">
-            <i class="fa fa-calendar" aria-hidden="true"></i> 2017-02-16
-        </p>
-        
-        <div class="post-content-preview">
-            <p>
-                1.前言&emsp;&emsp;本文是上一篇文章的续篇。上次大致介绍了ButterKnife的基本使用以及通过反射技术模拟实现了简易的ButterKnife效果。但是反射多少会有性能上的损耗。ButterKnife最新版本也不是通过反射来完成的，而是利用APT(Annotation Proces..
-            </p>
-        </div>
-    </a>
-
-</div>
-
-<hr>
-
-
-
-<div class="post-preview "
-     style="background-image: url('')">
-    <a href="/2017/01/21/top-anroid-library/">
-        <h2 class="post-title">
-            2016 top Android Libraty
-        </h2>
-        <p class="post-meta">
-            <i class="fa fa-calendar" aria-hidden="true"></i> 2017-01-21
-        </p>
-        
-        <div class="post-content-preview">
-            <p>
-                0.前言&emsp;&emsp;本文内容主要转载于代码张的博客–2016 TOP 10 ANDROID LIBRARY，记录下2016年比较火的安卓开源库，作为自己新年的一个学习计划。
-1.RxJavaRxJava的官方地址&emsp;&emsp;2016 年 Android 界最火的莫过于 R..
-            </p>
-        </div>
-    </a>
-
-</div>
-
-<hr>
-
-
-
-<div class="post-preview "
-     style="background-image: url('')">
-    <a href="/2017/01/20/inside-learn-butter-knife/">
-        <h2 class="post-title">
-            ButterKnife的使用与原理(1)
-        </h2>
-        <p class="post-meta">
-            <i class="fa fa-calendar" aria-hidden="true"></i> 2017-01-20
-        </p>
-        
-        <div class="post-content-preview">
-            <p>
-                1.概述&emsp;&emsp;ButterKnife是一个依托 Java 的注解机制来实现辅助代码生成的框架。对于注解机制还不是太熟悉或者了解的同学，可以参见笔者自己总结的一篇文章–Java注解机制基础。本文大致讲述ButterKnife常用的特性和使用过程中的一些要点。并分别通过反射机制以及..
-            </p>
-        </div>
-    </a>
-
-</div>
-
-<hr>
-
-
-
-<div class="post-preview "
-     style="background-image: url('')">
-    <a href="/2017/01/19/annotation-base-use/">
-        <h2 class="post-title">
-            Java注解机制基础
-        </h2>
-        <p class="post-meta">
-            <i class="fa fa-calendar" aria-hidden="true"></i> 2017-01-19
-        </p>
-        
-        <div class="post-content-preview">
-            <p>
-                &emsp;&emsp;最近整体研究了一下ButterKnife这个框架，顺带着系统回顾梳理了一遍Java注解相关的知识点。本文大致整理了一下注解的几个核心部分，内容参考了很多现有的资料，在参考文献中做出了说明。希望通过本文能对注解的基本原理做一个简要的梳理，为后续两篇文章深入的分析Butter..
-            </p>
-        </div>
-    </a>
-
-</div>
-
-<hr>
-
-
-
-<div class="post-preview "
-     style="background-image: url('')">
-    <a href="/2016/12/31/SingleDesginPattern/">
-        <h2 class="post-title">
-            单例模式各版本的原理与实践
-        </h2>
-        <p class="post-meta">
-            <i class="fa fa-calendar" aria-hidden="true"></i> 2016-12-31
-        </p>
-        
-        <div class="post-content-preview">
-            <p>
-                1.单例模式概述(1)引言&emsp;&emsp;单例模式是应用最广的模式之一，也是23种设计模式中最基本的一个。本文旨在总结通过Java实现单例模式的各个版本的优缺点及适用场景，详细分析如何实现线程安全的单例模式，并探讨单例模式的一些扩展。
-(2)单例模式的定义&emsp;&emsp;Ensu..
+标准广播是一种异步的方式来进行传播的，广播发出去之后，所有的广播接收者几乎是同一时间收到消息的。他们之间没有先后顺序可言，而且这种广播是没法被截断的。
+有序广播是一种同步执行的广播，在广播发出去之后，同一时刻只有一个广播接收器可以收到消息。当广播中的逻..
             </p>
         </div>
     </a>
@@ -336,10 +295,10 @@
 
 <ul class="pager">
     
-    
-    <li class="next">
-        <a href="/archives/page/2/">Older Posts &rarr;</a>
+    <li class="previous">
+        <a href="/">&larr; Newer Posts</a>
     </li>
+    
     
 </ul>
 
