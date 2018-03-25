@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- Head tag -->
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="caofengbin在 Github 上的个人博客">
+    <meta name="keyword" content="null">
+    <meta name="theme-color" content="#600090">
+    <meta name="msapplication-navbutton-color" content="#600090">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="#600090">
+    <link rel="shortcut icon" href="https://cdn4.iconfinder.com/data/icons/ionicons/512/icon-person-128.png">
+    <link rel="alternate" type="application/atom+xml" title="Caofengbin" href="/atom.xml">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css">
+    <link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.css">
+    <title>
+        
+        OkHttp源码解析3：RetryAndFollowUpInterceptor流程｜caofengbin&#39;s blog
+        
+    </title>
+
+    <link rel="canonical" href="http://haojen.github.io/2018/03/25/okhttp-three/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/blog-style.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+</head>
+
+<style>
+
+    header.intro-header {
+        background-image: url('http://occl9k36n.bkt.clouddn.com/2017_01_21_header_top_bg.jpg')
+    }
+</style>
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="" class="animated fadeIn">
+<!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top " id="nav-top" data-ispost = "true" data-istags="false
+" data-ishome = "false" >
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand animated pulse" href="/">
+                <span class="brand-logo">
+                    Caofengbin
+                </span>
+                's Blog
+            </a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Known Issue, found by Hux:
+            <nav>'s height woule be hold on by its content.
+            so, when navbar scale out, the <nav> will cover tags.
+            also mask any touch event of tags, unfortunately.
+        -->
+        <!-- /.navbar-collapse -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+					
+                    
+					
+					
+                </ul>
+            </div>
+        </div>
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+//    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        // CLOSE
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        // OPEN
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+<!-- Main Content -->
+
+<!--only post-->
+
+
+<img class="wechat-title-img"
+     src="http://occl9k36n.bkt.clouddn.com/my_homepage_img2.jpg">
+
+
+<style>
+    
+    header.intro-header {
+        background-image: url('http://occl9k36n.bkt.clouddn.com/my_homepage_img2.jpg')
+    }
+
+    
+</style>
+
+<header class="intro-header">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 text-center">
+                <div class="post-heading">
+                    <h1>OkHttp源码解析3：RetryAndFollowUpInterceptor流程</h1>
+                    
+                    <span class="meta">
+                         作者 Caofengbin
+                        <span>
+                          日期 2018-03-25
+                         </span>
+                    </span>
+                    <div class="tags text-center">
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="post-title-haojen">
+        <span>
+            OkHttp源码解析3：RetryAndFollowUpInterceptor流程
+        </span>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+            <!-- Post Container -->
+            <div class="col-lg-8 col-lg-offset-1 col-sm-9 post-container">
+                <h2 id="1-RetryAndFollowUpInterceptor的作用"><a href="#1-RetryAndFollowUpInterceptor的作用" class="headerlink" title="1.RetryAndFollowUpInterceptor的作用"></a>1.RetryAndFollowUpInterceptor的作用</h2><p>&emsp;&emsp;它是一个负责失败重试和重定向的拦截器，如果我们想要实现失败重连，那么就要在OkHttpClient中进行配置，相应的配置方式如下：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line">OkHttpClient okHttpClient = <span class="keyword">new</span> OkHttpClient();</div><div class="line">okHttpClient.retryOnConnectionFailure();</div></pre></td></tr></table></figure>
+<p>&emsp;&emsp;但是并不是所有的网络请求失败了都可以进行重连的，因此RetryAndFollowUpInterceptor内部会进行检测网络请求异常和响应码的情况，根据这些情况判断是否需要重新进行网络请求。</p>
+<p>&emsp;&emsp;RetryAndFollowUpInterceptor的功能主要包括如下几点：</p>
+<blockquote>
+<ul>
+<li>创建StreamAllocation对象；</li>
+<li>调用realChain.proceed(request, streamAllocation, null, null)进行网络请求；</li>
+<li>根据异常结果或者响应结果判断是否进行重新请求；</li>
+<li>调用下一个拦截器，对responese进行处理，返回给上一个拦截器；</li>
+</ul>
+</blockquote>
+<p>&emsp;&emsp;其中第二和第三点是在while(true)内部执行的，<strong>也就是系统通过死循环来实现重连机制。</strong></p>
+<hr>
+<h2 id="2-创建StreamAllocation对象"><a href="#2-创建StreamAllocation对象" class="headerlink" title="2.创建StreamAllocation对象"></a>2.创建StreamAllocation对象</h2><p>&emsp;&emsp;StreamAllocation在 RetryAndFollowUpInterceptor 创建，它会在 ConnectInterceptor中真正被使用到，主要就是用于获取连接服务端的 Connection和用于进行跟服务端进行数据传输的输入输出流 HttpStream。通过拦截器链进行一层层的传递。</p>
+<hr>
+<h2 id="3-网络请求"><a href="#3-网络请求" class="headerlink" title="3.网络请求"></a>3.网络请求</h2><p>&emsp;&emsp;<strong>因为在OkHttp中的拦截器的执行过程是一个递归的过程，也就是它内部会通过 RealInterceptorChain 这个类去负责将所有的拦截器进行串起来。只有所有的拦截器执行完毕之后，一个网络请求的响应 Response 才会被返回。</strong></p>
+<p><img src="http://static.zybuluo.com/caofengbin/an108zqbygs55kmlrvqwb3b6/OkHttp%E6%8B%A6%E6%88%AA%E5%99%A8%E9%93%BE.png" alt="OkHttp拦截器链.png-53.8kB"></p>
+<p>&emsp;&emsp;在上图中，从上往下就是网络请求的执行过程，从下往上就是Response相应回传的过程。</p>
+<p>&emsp;&emsp;但是在执行这个过程中，难免会出现一些问题，例如连接中断，握手失败或者服务器检测到未认证等，那么这个resposne的返回码就不是正常的200了，因此说这个response并不一定是可用的，或者说在请求过程就已经抛出异常了，例如超时异常等，那么 RetryAndFollowUpInterceptor 需要依据这些问题进行判断是否可以进行重新连接。也就是第一节中分析提及到的，在一个while循环中进行检测，核心代码如下：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"><span class="keyword">while</span>(<span class="keyword">true</span>)&#123;</div><div class="line">    <span class="keyword">try</span>&#123;</div><div class="line">        ...</div><div class="line">        response = ((RealInterceptorChain) chain).proceed(request, </div><div class="line">        streamAllocation, <span class="keyword">null</span>, <span class="keyword">null</span>);</div><div class="line">        ...</div><div class="line">    &#125; <span class="keyword">catch</span>(RouteException e)&#123;</div><div class="line">        <span class="comment">//判断 RouteException  否可以重连</span></div><div class="line">    &#125; <span class="keyword">catch</span>(IOException e)&#123;</div><div class="line">        <span class="comment">//判断 IOException 否可以重连</span></div><div class="line">    &#125; <span class="keyword">finally</span>&#123;</div><div class="line">        <span class="comment">//释放流</span></div><div class="line">    &#125;</div><div class="line">    ...</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<hr>
+<h2 id="4-失败重连机制"><a href="#4-失败重连机制" class="headerlink" title="4.失败重连机制"></a>4.失败重连机制</h2><p>&emsp;&emsp;实现失败重连机制主要基于while循环，核心代码如下：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"><span class="keyword">try</span> &#123;</div><div class="line">  <span class="comment">//网络请求</span></div><div class="line">  response = ((RealInterceptorChain) chain).proceed(request, streamAllocation, <span class="keyword">null</span>, <span class="keyword">null</span>);</div><div class="line">  <span class="comment">//表示是否要释放连接，在 finally 中会使用到。</span></div><div class="line">  releaseConnection = <span class="keyword">false</span>;</div><div class="line">&#125; <span class="keyword">catch</span> (RouteException e) &#123;</div><div class="line">  <span class="comment">//路由异常RouteException </span></div><div class="line">  <span class="comment">// The attempt to connect via a route failed. The request will not have been sent.</span></div><div class="line">  <span class="comment">//检测路由异常是否能重新连接</span></div><div class="line">  <span class="keyword">if</span> (!recover(e.getLastConnectException(), <span class="keyword">true</span>, request)) <span class="keyword">throw</span> e.getLastConnectException();</div><div class="line">  <span class="comment">//可以重新连接，那么就不要释放连接</span></div><div class="line">  releaseConnection = <span class="keyword">false</span>;</div><div class="line">  <span class="comment">//重新进行while循环，进行网络请求</span></div><div class="line">  <span class="keyword">continue</span>;</div><div class="line">&#125; <span class="keyword">catch</span> (IOException e) &#123;</div><div class="line">   <span class="comment">//检测该IO异常是否能重新连接</span></div><div class="line">  <span class="comment">// An attempt to communicate with a server failed. The request may have been sent.</span></div><div class="line">  <span class="keyword">if</span> (!recover(e, <span class="keyword">false</span>, request)) <span class="keyword">throw</span> e;</div><div class="line">  <span class="comment">//可以重新连接，那么就不要释放连接</span></div><div class="line">  releaseConnection = <span class="keyword">false</span>;</div><div class="line"> <span class="comment">//重新进行while循环，进行网络请求</span></div><div class="line">  <span class="keyword">continue</span>;</div><div class="line">&#125; <span class="keyword">finally</span> &#123;</div><div class="line">  <span class="comment">//当 releaseConnection 为true时表示需要释放连接了。</span></div><div class="line">  <span class="comment">// We're throwing an unchecked exception. Release any resources.</span></div><div class="line">  <span class="keyword">if</span> (releaseConnection) &#123;</div><div class="line">    streamAllocation.streamFailed(<span class="keyword">null</span>);</div><div class="line">    streamAllocation.release();</div><div class="line">  &#125;</div></pre></td></tr></table></figure>
+<h3 id="1-RouteException-异常的重连机制"><a href="#1-RouteException-异常的重连机制" class="headerlink" title="(1) RouteException 异常的重连机制"></a>(1) RouteException 异常的重连机制</h3><p>&emsp;&emsp;RouteException重连机制核心流程：</p>
+<blockquote>
+<ul>
+<li>通过 recover 方法检测该 RouteException 是否能重新连接；</li>
+<li>可以重新连接，那么就不要释放连接 releaseConnection = false；</li>
+<li>continue进入下一次循环，进行网络请求；</li>
+<li>不可以重新连接就直接走 finally 代码块释放连接；</li>
+</ul>
+</blockquote>
+<p>&emsp;&emsp;从下图可以看出RouteException是在<strong>获取一个HttpStream流和与Socket建立连接时出现异常才被抛出的</strong>，在抛异常的方法内部并没有显示地去捕获，因此异常会被RetryAndFollowUpInterceptor#intercept 中的 catch 捕获。</p>
+<p><img src="http://static.zybuluo.com/caofengbin/u97nopeestgselxrkohtwrmy/image_1c9e0fed0fhm12d1105p2qr1pk312.png" alt="image_1c9e0fed0fhm12d1105p2qr1pk312.png-31.2kB"></p>
+<h3 id="2-recover方法判断是否可以进行重连"><a href="#2-recover方法判断是否可以进行重连" class="headerlink" title="(2) recover方法判断是否可以进行重连"></a>(2) recover方法判断是否可以进行重连</h3><p>&emsp;&emsp;recover方法核心如下：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">boolean</span> <span class="title">recover</span><span class="params">(IOException e, StreamAllocation streamAllocation,</span></span></div><div class="line">                            <span class="keyword">boolean</span> requestSendStarted, Request userRequest) &#123;</div><div class="line">        streamAllocation.streamFailed(e);</div><div class="line"></div><div class="line">        <span class="comment">// The application layer has forbidden retries.</span></div><div class="line">        <span class="comment">// 1.判断 OkHttpClient 是否支持失败重连的机制</span></div><div class="line">        <span class="keyword">if</span> (!client.retryOnConnectionFailure()) &#123;</div><div class="line">            <span class="keyword">return</span> <span class="keyword">false</span>;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        <span class="comment">// We can't send the request body again.</span></div><div class="line">        <span class="keyword">if</span> (requestSendStarted &amp;&amp; userRequest.body() <span class="keyword">instanceof</span> UnrepeatableRequestBody)</div><div class="line">            <span class="keyword">return</span> <span class="keyword">false</span>;</div><div class="line"></div><div class="line">        <span class="comment">// This exception is fatal.</span></div><div class="line">        <span class="comment">// 2.检测该异常是否是致命的。</span></div><div class="line">        <span class="keyword">if</span> (!isRecoverable(e, requestSendStarted)) &#123;</div><div class="line">            <span class="keyword">return</span> <span class="keyword">false</span>;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        <span class="comment">// No more routes to attempt.</span></div><div class="line">        <span class="comment">// 3.是否有更多的路线</span></div><div class="line">        <span class="keyword">if</span> (!streamAllocation.hasMoreRoutes()) &#123;</div><div class="line">            <span class="keyword">return</span> <span class="keyword">false</span>;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        <span class="comment">// For failure recovery, use the same route selector with a new connection.</span></div><div class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</div><div class="line">    &#125;</div></pre></td></tr></table></figure>
+<p>&emsp;&emsp;从上面源码可以看出 recover 方法主要做了以下几件事：</p>
+<blockquote>
+<ul>
+<li>1.判断 OkHttpClient 是否支持失败重连的机制；</li>
+<li>2.通过 isRecoverable 方法检测该异常是否是致命的，如果不是致命的异常，就可以进行重试；</li>
+<li>3.是否有更多的路由路线，可以重试；</li>
+</ul>
+</blockquote>
+<h3 id="3-isRecoverable方法检测异常"><a href="#3-isRecoverable方法检测异常" class="headerlink" title="(3) isRecoverable方法检测异常"></a>(3) isRecoverable方法检测异常</h3><p>&emsp;&emsp;不可恢复的几类异常：</p>
+<blockquote>
+<ul>
+<li>ProtocolException：协议异常</li>
+<li>SSLHandshakeException：ssl握手异常</li>
+<li>SSLPeerUnverifiedException：ssl证书校验异常</li>
+</ul>
+</blockquote>
+<p>&emsp;&emsp;关于连接超时的异常处理：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"><span class="keyword">if</span> (e <span class="keyword">instanceof</span> InterruptedIOException) &#123;</div><div class="line">    <span class="keyword">return</span> e <span class="keyword">instanceof</span> SocketTimeoutException &amp;&amp; !requestSendStarted;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>&emsp;&emsp;对于SocketTimeoutException的异常，表示连接超时异常，这个异常是可以进行重连的，即OkHttp内部对连接超时异常会进行自动重试处理。</p>
+<h3 id="4-followUpRequest-响应码检测"><a href="#4-followUpRequest-响应码检测" class="headerlink" title="(4) followUpRequest 响应码检测"></a>(4) followUpRequest 响应码检测</h3><p>&emsp;&emsp;当代码可以执行到followUpRequest方法就表示这个请求是成功的，但是服务器返回的状态码可能不是 200 ok的情况，这时还需要对该请求进行检测，其主要就是通过返回码进行判断的。这里我们主要关注重定向相关的逻辑：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"> <span class="keyword">case</span> HTTP_MULT_CHOICE:</div><div class="line"><span class="keyword">case</span> HTTP_MOVED_PERM:</div><div class="line"><span class="keyword">case</span> HTTP_MOVED_TEMP:</div><div class="line"><span class="keyword">case</span> HTTP_SEE_OTHER:</div><div class="line">    <span class="comment">// Does the client allow redirects?</span></div><div class="line">    <span class="comment">// 300,301,302,303几个重定向相关的状态码</span></div><div class="line">    <span class="keyword">if</span> (!client.followRedirects()) &#123;</div><div class="line">        <span class="keyword">return</span> <span class="keyword">null</span>;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">// 获取响应头 Location 值，这就是要重定向的地址；</span></div><div class="line">    String location = userResponse.header(<span class="string">"Location"</span>);</div><div class="line">        <span class="keyword">if</span> (location == <span class="keyword">null</span>) &#123;</div><div class="line">             <span class="keyword">return</span> <span class="keyword">null</span>;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    HttpUrl url = userResponse.request().url().resolve(location);</div><div class="line"></div><div class="line">    <span class="comment">// Don't follow redirects to unsupported protocols.</span></div><div class="line">    <span class="keyword">if</span> (url == <span class="keyword">null</span>) <span class="keyword">return</span> <span class="keyword">null</span>;</div><div class="line"></div><div class="line">    <span class="comment">// 进行重定向的相关操作</span></div></pre></td></tr></table></figure>
+<p>&emsp;&emsp;通过client.followRedirects()判断是否运行重定向，<strong>之后获取响应头 Location 值，这就是要重定向的地址</strong>，之后进行重定向相关的操作即可；</p>
+<h3 id="5-重试次数判断"><a href="#5-重试次数判断" class="headerlink" title="(5) 重试次数判断"></a>(5) 重试次数判断</h3><p>&emsp;&emsp;在 RetryAndFollowUpInterceptor 内部有一个 MAX_FOLLOW_UPS常量，它表示该请求可以重试多少次，在 OKHTTP 内部中是不能超过 20 次，<strong>如果超过 20 次，那么就不会再请求了。</strong></p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> MAX_FOLLOW_UPS = <span class="number">20</span>;</div><div class="line"></div><div class="line"><span class="keyword">if</span> (++followUpCount &gt; MAX_FOLLOW_UPS) &#123;</div><div class="line">  streamAllocation.release();</div><div class="line">  <span class="keyword">throw</span> <span class="keyword">new</span> ProtocolException(<span class="string">"Too many follow-up requests: "</span> + followUpCount);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<hr>
+<h2 id="5-完整的流程图"><a href="#5-完整的流程图" class="headerlink" title="5.完整的流程图"></a>5.完整的流程图</h2><p><img src="http://static.zybuluo.com/caofengbin/quz7t2nimwvfnarv4ng35m9o/RetryAndFollowUpInterceptor%E6%B5%81%E7%A8%8B.png" alt="RetryAndFollowUpInterceptor流程.png-97.3kB"></p>
+<hr>
+<h2 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h2><p><a href="https://www.jianshu.com/p/64111e0db93c" target="_blank" rel="external">1.OKHTTP拦截器RetryAndFollowUpInterceptor的简单分析</a><br><a href="https://www.jianshu.com/p/fa0dcbfe05cd?utm_campaign=hugo&amp;utm_medium=reader_share&amp;utm_content=note&amp;utm_source=qq" target="_blank" rel="external">2.深入理解OkHttp源码及设计思想</a></p>
+
+                <hr>
+                
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/2099/12/31/aaa-top-file/" data-toggle="tooltip" data-placement="top"
+                           title="逍遥游">&larr; Previous Post</a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/2018/03/16/dhcp-and-nat/" data-toggle="tooltip" data-placement="top"
+                           title="长连接及心跳保活原理简介">Next Post &rarr;</a>
+                    </li>
+                    
+                </ul>
+
+                
+
+                
+
+            </div>
+
+            <div class="hidden-xs col-sm-3 toc-col">
+                <div class="toc-wrap">
+                    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-RetryAndFollowUpInterceptor的作用"><span class="toc-text">1.RetryAndFollowUpInterceptor的作用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-创建StreamAllocation对象"><span class="toc-text">2.创建StreamAllocation对象</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-网络请求"><span class="toc-text">3.网络请求</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-失败重连机制"><span class="toc-text">4.失败重连机制</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-RouteException-异常的重连机制"><span class="toc-text">(1) RouteException 异常的重连机制</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-recover方法判断是否可以进行重连"><span class="toc-text">(2) recover方法判断是否可以进行重连</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-isRecoverable方法检测异常"><span class="toc-text">(3) isRecoverable方法检测异常</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-followUpRequest-响应码检测"><span class="toc-text">(4) followUpRequest 响应码检测</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-重试次数判断"><span class="toc-text">(5) 重试次数判断</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-完整的流程图"><span class="toc-text">5.完整的流程图</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考链接"><span class="toc-text">参考链接</span></a></li></ol>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Sidebar Container -->
+
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <!-- no hr -->
+                    <h5 class="text-center">
+                        <a href="/tags/">FEATURED TAGS</a>
+                    </h5>
+                    <div class="tags">
+                        
+                    </div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <div style="margin-top: 20px;">
+                    <h5 class="text-center">FRIENDS</h5>
+                    <ul class="list-inline text-center">
+                        
+                        <li><a href="http://stormzhang.com/posts/">stormzhang博客</a></li>
+                        
+                        <li><a href="http://blog.csdn.net/sinyu890807/article/list/1">郭霖博客频道</a></li>
+                        
+                        <li><a href="http://blog.csdn.net/singwhatiwanna">任玉刚博客频道</a></li>
+                        
+                        <li><a href="http://blog.csdn.net/lmj623565791">张鸿洋博客频道</a></li>
+                        
+                    </ul>
+                </div>
+                
+            </div>
+        </div>
+
+    </div>
+</article>
+
+
+
+
+
+
+<!-- Footer -->
+<!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 text-center">
+                <br>
+                <ul class="list-inline text-center">
+                
+                
+                
+                    <li>
+                        <a target="_blank" href="https://www.zhihu.com/people/cao-feng-bin">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa  fa-stack-1x fa-inverse">知</i>
+                            </span>
+                        </a>
+                    </li>
+                
+
+                
+
+                
+
+                
+                    <li>
+                        <a target="_blank"  href="https://github.com/caofengbin">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                
+
+                
+
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; Caofengbin 2018
+                    <br>
+                    <span id="busuanzi_container_site_pv" style="font-size: 12px;">PV: <span id="busuanzi_value_site_pv"></span> Times</span>
+                    <br>
+                    Theme by <a href="https://haojen.github.io/">Haojen Ma</a>
+                </p>
+
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js"></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js"></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/blog.js"></script>
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async("http://haojen.github.io/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("//cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+<!-- Google Analytics -->
+
+
+
+<!-- Baidu Tongji -->
+
+
+<!-- swiftype -->
+<script type="text/javascript">
+  (function(w,d,t,u,n,s,e){w['SwiftypeObject']=n;w[n]=w[n]||function(){
+  (w[n].q=w[n].q||[]).push(arguments);};s=d.createElement(t);
+  e=d.getElementsByTagName(t)[0];s.async=1;s.src=u;e.parentNode.insertBefore(s,e);
+  })(window,document,'script','//s.swiftypecdn.com/install/v2/st.js','_st');
+
+  _st('install','null','2.0.0');
+</script>
+
+<script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<!--wechat title img-->
+<img class="wechat-title-img" src="http://occl9k36n.bkt.clouddn.com/my_head_image.jpg">
+</body>
+
+</html>
