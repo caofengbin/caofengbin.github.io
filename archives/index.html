@@ -168,6 +168,33 @@
 
 <div class="post-preview "
      style="background-image: url('')">
+    <a href="/2018/03/29/okhttp-four/">
+        <h2 class="post-title">
+            OkHttp源码解析4：BridgeInterceptor流程
+        </h2>
+        <p class="post-meta">
+            <i class="fa fa-calendar" aria-hidden="true"></i> 2018-03-29
+        </p>
+        
+        <div class="post-content-preview">
+            <p>
+                1.BridgeInterceptor概述&emsp;&emsp;BridgeInterceptor是OkHttp的core拦截器链中的第二个拦截器，该拦截器的主要功能是：
+
+
+在请求前对Header进行处理，如果用户有设置就直接使用，如果没有设置就使用默认的；
+通过Chain调用下一个拦截器进..
+            </p>
+        </div>
+    </a>
+
+</div>
+
+<hr>
+
+
+
+<div class="post-preview "
+     style="background-image: url('')">
     <a href="/2018/03/25/okhttp-three/">
         <h2 class="post-title">
             OkHttp源码解析3：RetryAndFollowUpInterceptor流程
@@ -298,29 +325,6 @@ OkHttpClient okHttpClient = new OkHttp..
         <div class="post-content-preview">
             <p>
                 1.概述&emsp;&emsp;ButterKnife是一个依托 Java 的注解机制来实现辅助代码生成的框架。对于注解机制还不是太熟悉或者了解的同学，可以参见笔者自己总结的一篇文章–Java注解机制基础。本文大致讲述ButterKnife常用的特性和使用过程中的一些要点。并分别通过反射机制以及..
-            </p>
-        </div>
-    </a>
-
-</div>
-
-<hr>
-
-
-
-<div class="post-preview "
-     style="background-image: url('')">
-    <a href="/2017/01/19/annotation-base-use/">
-        <h2 class="post-title">
-            Java注解机制基础
-        </h2>
-        <p class="post-meta">
-            <i class="fa fa-calendar" aria-hidden="true"></i> 2017-01-19
-        </p>
-        
-        <div class="post-content-preview">
-            <p>
-                &emsp;&emsp;最近整体研究了一下ButterKnife这个框架，顺带着系统回顾梳理了一遍Java注解相关的知识点。本文大致整理了一下注解的几个核心部分，内容参考了很多现有的资料，在参考文献中做出了说明。希望通过本文能对注解的基本原理做一个简要的梳理，为后续两篇文章深入的分析Butter..
             </p>
         </div>
     </a>
