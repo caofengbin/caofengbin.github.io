@@ -43,6 +43,105 @@
   </entry>
   
   <entry>
+    <title>HTTP缓存原理</title>
+    <link href="http://haojen.github.io/2018/04/01/httpCaches/"/>
+    <id>http://haojen.github.io/2018/04/01/httpCaches/</id>
+    <published>2018-04-01T05:25:26.000Z</published>
+    <updated>2018-04-01T05:27:47.372Z</updated>
+    
+    <content type="html"><![CDATA[<h2 id="1-与缓存相关的HTTP首部字段"><a href="#1-与缓存相关的HTTP首部字段" class="headerlink" title="1.与缓存相关的HTTP首部字段"></a>1.与缓存相关的HTTP首部字段</h2><h3 id="1-通用首部"><a href="#1-通用首部" class="headerlink" title="(1) 通用首部"></a>(1) 通用首部</h3><h4 id="通用首部1-Cache-Control"><a href="#通用首部1-Cache-Control" class="headerlink" title="通用首部1:Cache-Control"></a>通用首部1:Cache-Control</h4><p>&emsp;&emsp;通过指定首部字段Cache-Control的指令，进行操作缓存的工作机制。<br>&emsp;&emsp;指令的参数是可选的，多个指令之间通过“,”分隔。<strong>首部字段Cache-Control的指令可用于请求及响应时。</strong></p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line">Cache-Control: <span class="keyword">private</span>, max-age=<span class="number">0</span>, no-cache</div></pre></td></tr></table></figure>
+<h4 id="通用首部2-Pragma"><a href="#通用首部2-Pragma" class="headerlink" title="通用首部2:Pragma"></a>通用首部2:Pragma</h4><p>&emsp;&emsp;Pragma是HTTP/1.1之前版本的历史遗留字段，仅作为与HTTP/1.0的向后兼容而定义。规范定义的形式唯一，如下所示：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line">Pragma: no-cache</div></pre></td></tr></table></figure>
+<p>&emsp;&emsp;该首部字段属于通用首部字段，但只用在客户端发送的请求中。<strong>客户端会要求所有的中间服务器不返回缓存的资源。</strong>该字段目前使用的场景非常少，了解即可。</p>
+<h3 id="2-请求首部"><a href="#2-请求首部" class="headerlink" title="(2) 请求首部"></a>(2) 请求首部</h3><p>If-Match：比较ETag是否一致；<br>If-None-Match：比较ETag是否不一致；<br>If-Modified-Since：比较资源最后更新的时间是否一致；<br>If-Unmodified-Since：比较资源最后更新的时间是否不一致；</p>
+<p>&emsp;&emsp;形如If-xxx这种样式的请求首部字段，都可称为条件请求。<strong>服务器接收到附带条件的请求后，只有判断指定条件为真时，才会执行请求。</strong></p>
+<p><img src="http://static.zybuluo.com/caofengbin/t1dt62cbycn2au7fbp6ps4gt/image_1c9q7jb8c9e5hlnto61n071n1e9.png" alt="image_1c9q7jb8c9e5hlnto61n071n1e9.png-119.1kB"></p>
+<p>&emsp;&emsp;只有当 If-Match 的字段值跟 ETag 值匹配一致时，服务器才会接受请求。<br>&emsp;&emsp;首部字段If-Modified-Since，属附带条件之一，它会<strong>告知服务器若If-Modified-Since字段值早于资源的更新时间，则希望能处理该请求。而在指定If-Modified-Since字段值的日期时间之后，如果请求的资源都没有过更新，则返回状态码304 Not Modified的响应。</strong><br>&emsp;&emsp;If-Modified-Since用于确认代理或客户端拥有的本地资源的有效性。获取资源的更新日期时间，可通过确认首部字段Last-Modified来确定。</p>
+<h3 id="3-响应首部"><a href="#3-响应首部" class="headerlink" title="(3) 响应首部"></a>(3) 响应首部</h3><h4 id="ETag"><a href="#ETag" class="headerlink" title="ETag"></a>ETag</h4><p>&emsp;&emsp;<strong>首部字段ETag能告知客户端实体标识</strong>。它是一种可将资源以字符串形式做唯一性标识的方式。服务器会为每份资源分配对应的ETag值。<br>&emsp;&emsp;另外，当资源更新时，ETag值也需要更新。生成ETag值时，<strong>并没有统一的算法规则，而仅仅是由服务器来分配。</strong></p>
+<h3 id="4-实体首部"><a href="#4-实体首部" class="headerlink" title="(4) 实体首部"></a>(4) 实体首部</h3><h4 id="实体首部：Expires"><a href="#实体首部：Expires" class="headerlink" title="实体首部：Expires"></a>实体首部：Expires</h4><p>&emsp;&emsp;<strong>首部字段Expires会将资源失效的日期告知客户端</strong>。缓存服务器在接收到含有首部字段Expires的响应后，会以缓存来应答请求，在Expires字段值指定的时间之前，响应的副本会一直被保存。当超过指定的时间后，缓存服务器在请求发送过来时，会转向源服务器请求资源。</p>
+<h4 id="实体首部：Last-Modified"><a href="#实体首部：Last-Modified" class="headerlink" title="实体首部：Last-Modified"></a>实体首部：Last-Modified</h4><p>&emsp;&emsp;首部字段Last-Modified指明<strong>资源最终修改的时间</strong>。一般来说，这个值就是Request-URI指定资源被修改的时间。但类似使用CGI脚本进行动态数据处理时，该值有可能会变成数据最终修改时的时间。</p>
+<hr>
+<h2 id="2-缓存工作流程–强制缓存"><a href="#2-缓存工作流程–强制缓存" class="headerlink" title="2.缓存工作流程–强制缓存"></a>2.缓存工作流程–强制缓存</h2><h3 id="1-Expires策略"><a href="#1-Expires策略" class="headerlink" title="(1) Expires策略"></a>(1) Expires策略</h3><p>&emsp;&emsp;Expires是Web服务器响应消息头字段，在响应http请求时告诉浏览器在过期时间前浏览器可以直接从浏览器缓存取数据，而无需再次请求。<br>&emsp;&emsp;Expires的缺点是：<strong>响应报文中Expires所定义的缓存时间是相对服务器上的时间而言的，其定义的是资源“失效时刻”</strong>，如果客户端上的时间跟服务器上的时间不一致，缓存将失效。<br>&emsp;&emsp;另外，Expires主要使用在HTTP1.0版本。</p>
+<h3 id="2-Cache-Control"><a href="#2-Cache-Control" class="headerlink" title="(2) Cache-Control"></a>(2) Cache-Control</h3><p>&emsp;&emsp;HTTP1.1版本增加了Cache-Control来定义缓存过期时间。<strong>Cache-Control与Expires的作用一致，都是指明当前资源的有效期，控制浏览器是否直接从浏览器缓存取数据还是重新发请求到服务器取数据</strong>。只不过Cache-Control的选择更多，设置更细致，如果同时设置的话，其优先级高于Expires。</p>
+<p>&emsp;&emsp;缓存请求指令：</p>
+<table>
+<thead>
+<tr>
+<th>指令</th>
+<th>参数</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>no-cache</td>
+<td>无</td>
+<td>强制向源服务器再次验证</td>
+</tr>
+<tr>
+<td>no-store</td>
+<td>无</td>
+<td>不缓存请求或响应的任何内容</td>
+</tr>
+</tbody>
+</table>
+<p>&emsp;&emsp;<strong>缓存响应指令(更重要)</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>指令</th>
+<th>参数</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>public</td>
+<td>无</td>
+<td>可向任意方提供响应的缓存</td>
+</tr>
+<tr>
+<td>private</td>
+<td>可省略</td>
+<td>仅向特定用户返回响应</td>
+</tr>
+<tr>
+<td>no-cache</td>
+<td>可省略</td>
+<td><strong>缓存前必须先确认其有效性</strong></td>
+</tr>
+<tr>
+<td>no-store</td>
+<td>无</td>
+<td><strong>不缓存请求或响应的任何内容</strong></td>
+</tr>
+<tr>
+<td>max-age = [ 秒]</td>
+<td>必需</td>
+<td>响应的最大Age值</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="3-缓存工作流程–对比缓存"><a href="#3-缓存工作流程–对比缓存" class="headerlink" title="3.缓存工作流程–对比缓存"></a>3.缓存工作流程–对比缓存</h2><h3 id="1-流程1：ETag比对"><a href="#1-流程1：ETag比对" class="headerlink" title="(1) 流程1：ETag比对"></a>(1) 流程1：ETag比对</h3><p>&emsp;&emsp;服务器会通过某种算法，给资源计算得出一个唯一标志符（比如md5标志），在把资源响应给客户端的时候，<strong>会在实体首部加上“ETag: 唯一标识符”一起返回给客户端。</strong><br>&emsp;&emsp;客户端会保留该ETag字段，并在下一次请求时将其一并带过去给服务器。服务器只需要比较客户端传来的ETag跟自己服务器上该资源的ETag是否一致，就能很好地判断资源相对客户端而言是否被修改过了。 如果服务器发现ETag匹配不上，那么直接以常规GET200回包形式将新的资源（当然也包括了新的ETag）发给客户端；如果ETag是一致的，<strong>则直接返回304知会客户端直接使用本地缓存即可。</strong></p>
+<h3 id="2-流程2：Last-Modified比对"><a href="#2-流程2：Last-Modified比对" class="headerlink" title="(2) 流程2：Last-Modified比对"></a>(2) 流程2：Last-Modified比对</h3><p>&emsp;&emsp;服务器将资源传递给客户端时，会将资源最后更改的时间以“Last-Modified: GMT”的形式加在实体首部上一起返回给客户端。<br>&emsp;&emsp;客户端会为资源标记上该信息，下次再次请求时，会把该信息附带在请求报文中一并带给服务器去做检查，若传递的时间值与服务器上该资源最终修改时间是一致的，则说明该资源没有被修改过，直接返回304状态码，内容为空，这样就节省了传输数据量 。如果两个时间不一致，则服务器会发回该资源并返回200状态码，和第一次请求时类似。这样保证不向客户端重复发出资源，也保证当服务器有变化时，客户端能够得到最新的资源。一个304响应比一个静态资源通常小得多，这样就节省了网络带宽。</p>
+<hr>
+<h2 id="4-完整流程综述"><a href="#4-完整流程综述" class="headerlink" title="4.完整流程综述"></a>4.完整流程综述</h2><h3 id="1-from-cache-304"><a href="#1-from-cache-304" class="headerlink" title="(1) from-cache / 304"></a>(1) from-cache / 304</h3><p>&emsp;&emsp;Expires和Cache-Control都有一个问题就是服务端作为的修改，如果还在缓存时效里，那么客户端是不会去请求服务端资源的(非刷新)，这就存在一个资源版本不符的问题，而强制刷新一定会发起HTTP请求并返回资源内容，无论该内容在这段时间内是否修改过；<strong>而Last-Modified和Etag每次请求资源都会发起请求，哪怕是很久都不会有修改的资源，都至少有一次请求响应的消耗。</strong><br>&emsp;&emsp;对于所有可缓存资源，指定一个Expires或Cache-Control max-age以及一个Last-Modified或ETag至关重要。同时使用前者和后者可以很好的相互适应。<br>&emsp;&emsp;前者不需要每次都发起一次请求来校验资源时效性，后者保证当资源未出现修改的时候不需要重新发送该资源。而在用户的不同刷新页面行为中，二者的结合也能很好的利用HTTP缓存控制特性，无论是在地址栏输入URI然后输入回车进行访问，还是点击刷新按钮，浏览器都能充分利用缓存内容，避免进行不必要的请求与数据传输。</p>
+<h3 id="2-整体流程"><a href="#2-整体流程" class="headerlink" title="(2) 整体流程"></a>(2) 整体流程</h3><p><img src="http://static.zybuluo.com/caofengbin/0eu4xmewsm9ld8898t8djj8f/HTTP%E7%BC%93%E5%AD%98%E6%B5%81%E7%A8%8B.png" alt="HTTP缓存流程.png-71.7kB"></p>
+<hr>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;h2 id=&quot;1-与缓存相关的HTTP首部字段&quot;&gt;&lt;a href=&quot;#1-与缓存相关的HTTP首部字段&quot; class=&quot;headerlink&quot; title=&quot;1.与缓存相关的HTTP首部字段&quot;&gt;&lt;/a&gt;1.与缓存相关的HTTP首部字段&lt;/h2&gt;&lt;h3 id=&quot;1-通用首部&quot;&gt;&lt;
+    
+    </summary>
+    
+    
+  </entry>
+  
+  <entry>
     <title>OkHttp源码解析4：BridgeInterceptor流程</title>
     <link href="http://haojen.github.io/2018/03/29/okhttp-four/"/>
     <id>http://haojen.github.io/2018/03/29/okhttp-four/</id>
