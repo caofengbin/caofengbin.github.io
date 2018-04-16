@@ -2,6 +2,20 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>http://haojen.github.io/2018/04/16/okhttp-call-server-interceptor/</loc>
+    
+    <lastmod>2018-04-16T05:50:21.230Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://haojen.github.io/2018/04/15/okhttp-connect-interceptor/</loc>
+    
+    <lastmod>2018-04-16T05:44:59.531Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>http://haojen.github.io/2018/04/12/OKhttp-cache/</loc>
     
     <lastmod>2018-04-12T05:41:49.027Z</lastmod>
